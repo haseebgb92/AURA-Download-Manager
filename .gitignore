@@ -1,0 +1,53 @@
+# Secrets / environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+credentials.json
+service-account*.json
+
+# Node / JS
+node_modules/
+.next/
+.nuxt/
+dist/
+build/
+.cache/
+coverage/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# PHP / Composer
+/vendor/
+
+# WordPress secrets / generated files
+wp-config.php
+wp-content/cache/
+wp-content/uploads/cache/
+
+# Android / Gradle
+.gradle/
+local.properties
+*.jks
+*.keystore
+/app/build/
+/build/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp
+*.swp
+*~
