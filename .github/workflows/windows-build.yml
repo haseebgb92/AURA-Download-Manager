@@ -36,6 +36,20 @@ jobs:
         run: |
           if (!(Test-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe')) { throw "Missing app binary" }
           if (!(Test-Path 'dist/AURA-Download-Manager/_internal/bin/aria2c.exe')) { throw "Missing aria2 binary" }
+      - name: Test packaged aria2 engine
+        timeout-minutes: 3
+        shell: pwsh
+        run: |
+          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--self-test' -PassThru -Wait
+          if ($proc.ExitCode -ne 0) { throw "Bundled aria2 engine smoke test failed: $($proc.ExitCode)" }
+      - name: Test packaged Qt interface offscreen
+        timeout-minutes: 3
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--ui-smoke' -PassThru -Wait
+          if ($proc.ExitCode -ne 0) { throw "Qt UI smoke test failed: $($proc.ExitCode)" }
       - uses: actions/upload-artifact@v4
         with:
           name: AURA-Download-Manager-Windows

@@ -482,6 +482,10 @@ def main():
         assert rpc('getVersion').get('version')
         assert validate_url('https://example.org/example.zip')
         return 0
+    ui_smoke='--ui-smoke' in sys.argv
+    if ui_smoke:
+        sys.argv.remove('--ui-smoke')
+        os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
     app=QApplication(sys.argv)
     app.setApplicationName("AURA Download Manager")
     try:start_engine()
@@ -497,6 +501,15 @@ def main():
         return 1
     win=MainWindow()
     win.show()
+    if ui_smoke:
+        for index in (1,2,3,0):
+            win.tabs.setCurrentIndex(index)
+            app.processEvents()
+        if win.worker is not None:
+            win.worker.wait(15000)
+        app.processEvents()
+        server.shutdown()
+        return 0
     code=app.exec()
     server.shutdown()
     return code

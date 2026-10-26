@@ -207,7 +207,9 @@ class App:
             col=Gtk.TreeViewColumn(title,Gtk.CellRendererText(),text=idx);col.set_resizable(True);col.set_min_width(80);self.tree.append_column(col)
         self.tree.get_column(0).set_min_width(240)
         self.tree.get_column(5).set_visible(False)
-        col=Gtk.TreeViewColumn('DELETE',Gtk.CellRendererPixbuf(),icon_name='user-trash-symbolic')
+        renderer=Gtk.CellRendererPixbuf()
+        renderer.set_property('icon-name','user-trash-symbolic')
+        col=Gtk.TreeViewColumn('DELETE',renderer)
         col.set_fixed_width(74)
         self.delete_column=col
         self.tree.append_column(col)
