@@ -44,7 +44,8 @@ jobs:
         timeout-minutes: 3
         shell: pwsh
         run: |
-          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--self-test' -PassThru -Wait
+          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--self-test' -PassThru
+          if (!$proc.WaitForExit(45000)) { $proc.Kill(); throw 'Engine test timed out' }
           if ($proc.ExitCode -ne 0) { throw "Bundled aria2 engine smoke test failed: $($proc.ExitCode)" }
       - name: Test packaged Qt interface offscreen
         timeout-minutes: 3
@@ -52,7 +53,8 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--ui-smoke' -PassThru -Wait
+          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--ui-smoke' -PassThru
+          if (!$proc.WaitForExit(45000)) { $proc.Kill(); throw 'UI test timed out' }
           if ($proc.ExitCode -ne 0) { throw "Qt UI smoke test failed: $($proc.ExitCode)" }
       - uses: actions/upload-artifact@v4
         with:
