@@ -1,6 +1,10 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>AURA</title><link rel="stylesheet" href="popup.css"></head><body>
 <header><div class="logo" aria-hidden="true"><img src="icon.png" alt="" width="37" height="37"></div><div><strong>AURA</strong><small>Download Manager</small></div><span id="state" class="status">Connecting</span></header>
-<main><label for="url">Download URL</label><div class="field"><input id="url" type="url" placeholder="https://example.com/file.zip" autocomplete="off" spellcheck="false"><button id="send" class="primary" title="Add URL to AURA" aria-label="Add URL to AURA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div><p class="hint">Ordinary browser downloads stay in your browser. AURA only receives links you send.</p>
+<main><label for="url">Download URL</label><div class="field"><input id="url" type="url" placeholder="https://example.com/file.zip" autocomplete="off" spellcheck="false"><button id="send" class="primary" title="Add URL to AURA" aria-label="Add URL to AURA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div><p class="hint">Images and small webpage assets stay in your browser. Other downloads go to AURA when available.</p>
+<div class="capture-setting">
+  <div class="capture-info"><strong>Auto-capture downloads</strong><small>Pause browser transfer, hand it to AURA, then remove the duplicate</small></div>
+  <label class="switch" for="auto"><input id="auto" type="checkbox" checked aria-label="Automatically capture eligible downloads"><span class="track"></span></label>
+</div>
 <section class="connection"><div class="section-title">Desktop connection</div><p class="hint">AURA connects securely and automatically. No pairing code needed.</p><button id="check" class="secondary">Check connection</button></section>
 <div id="notice" role="status" aria-live="polite">Ready when you are.</div>
 </main><script src="popup.js"></script></body></html>

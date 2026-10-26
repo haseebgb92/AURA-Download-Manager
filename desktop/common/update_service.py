@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
-VERSION = "0.6.3"
+VERSION = "0.6.4"
 REPOSITORY = "haseebgb92/AURA-Download-Manager"
 RELEASES_URL = f"https://github.com/{REPOSITORY}/releases"
 API_URL = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"

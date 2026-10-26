@@ -6,6 +6,12 @@
 
 ## Updates and releases
 
+**v0.6.4 Automatic download capture:** Chrome and Firefox now listen for browser download events and automatically hand eligible HTTP(S) files to the AURA desktop manager. Images (PNG, JPEG, WebP, SVG, AVIF, GIF, HEIC and others), fonts, scripts, CSS and very small web assets stay in the browser. Private browsing, unsafe/download-warning files, and unsupported URL schemes are left untouched. A small toggle in the extension popup enables/disables automatic capture; default is on. Right-click **Download with AURA** works for links and images even when automatic capture is off.
+
+The extension pauses an eligible download, sends only its URL through native messaging, and cancels/cleans the browser copy **only if AURA acknowledges that the job was queued**. If AURA is unavailable, it resumes the paused browser job. Downloads that require browser cookies, POST requests or private sessions may fail later in aria2; use the browser for those cases. Some very small downloads can finish before AURA can intercept them and will remain in Chrome/Firefox. Auto-capture works only when the desktop app is running.
+
+
+
 **v0.6.3 Browser pairing upgrade:** no pairing codes. Chrome and Firefox use a browser-authorized native helper with a strict extension allowlist; the private desktop bridge token stays local. AURA automatically registers the helper on Linux installation and Windows startup (with the bundled helper). Reload an already installed extension once to pick up its new native-messaging permission. The previous browser-stored secret can be safely revoked.
 
 
@@ -66,7 +72,7 @@ The Windows version supports HTTP(S) downloads, queue status, pause/resume, hist
 
 **Windows:** The ZIP contains `AURA-Native-Host.exe`, a copy of the browser extensions, and the desktop executable. Launching the desktop app installs user-level native messaging manifests (no administrator access). Chrome installation is recognized when the unpacked extension's script matches the shipped AURA extension. After adding the unpacked Chrome extension, restart the desktop app once to register its browser ID, then reload the extension. Firefox uses its stable signed extension ID.
 
-The extension popup automatically shows whether desktop AURA is connected; clicking **Check connection** is optional. Normal browser downloads stay in Chrome/Firefox. Only the extension's explicit add or context-menu action sends a URL to AURA. Do not modify or share `bridge.token`.
+The extension popup automatically shows whether desktop AURA is connected; clicking **Check connection** is optional. With auto-capture enabled, eligible browser downloads transfer to AURA; images and excluded web assets remain in the browser. The popup toggle disables automatic capture without affecting the manual right-click action. Do not modify or share `bridge.token`.
 
 ## Privacy and security
 

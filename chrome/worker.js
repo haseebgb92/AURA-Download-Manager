@@ -1,4 +1,5 @@
 'use strict';
+importScripts('capture.js');
 const HOST = 'com.advertpreneur.aura';
 const validUrl = url => {
   try { const u = new URL(url); return ['http:', 'https:'].includes(u.protocol) && !!u.hostname && !u.username && !u.password; }
@@ -20,11 +21,13 @@ async function add(url,kind=null) {
   return nativeRequest(kind ? 'stream' : 'add', {url,kind});
 }
 chrome.runtime.onInstalled.addListener(()=>{
-  chrome.contextMenus.create({id:'aura-link',title:'Download with AURA',contexts:['link']});
-  // Legacy browser tokens are revoked by the desktop upgrade.
+  chrome.contextMenus.create({id:'aura-link',title:'Download with AURA',contexts:['link','image','video','audio']});
+  // Preserve auto-capture preference; clear only old pairing credentials.
+  chrome.storage.local.remove('pairingToken');
+  capture.recover().catch(console.warn);
 });
 chrome.contextMenus.onClicked.addListener(info => {
-  if (info.menuItemId === 'aura-link') add(info.linkUrl).catch(console.warn);
+  if (info.menuItemId === 'aura-link') add((info.linkUrl || info.srcUrl)).catch(console.warn);
 });
 // Ordinary Chrome downloads stay in Chrome; no downloads.onCreated event.
 chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
@@ -40,3 +43,7 @@ chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
   task.then(data=>reply({ok:true,...data})).catch(e=>reply({ok:false,error:e.message}));
   return true;
 });
+
+// Auto handoff starts enabled; users can disable it in the AURA popup.
+const capture=AuraCapture.register(chrome,nativeRequest);
+chrome.runtime.onStartup.addListener(()=>capture.recover().catch(console.warn));

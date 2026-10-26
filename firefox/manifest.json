@@ -1,14 +1,17 @@
 {
   "manifest_version": 2,
   "name": "AURA Download Manager",
-  "version": "0.6.3",
-  "description": "Explicitly hand off downloads to your AURA desktop app.",
+  "version": "0.6.4",
+  "description": "Automatically capture downloads with AURA; leave images in your browser and keep manual right-click handoff.",
   "permissions": [
     "contextMenus",
-    "nativeMessaging"
+    "nativeMessaging",
+    "downloads",
+    "storage"
   ],
   "background": {
     "scripts": [
+      "capture.js",
       "worker.js"
     ]
   },

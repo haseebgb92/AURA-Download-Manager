@@ -23,6 +23,8 @@ jobs:
         run: |
           node --check chrome/worker.js
           node --check firefox/worker.js
+          node --check chrome/capture.js
+          node --check firefox/capture.js
           node --check chrome/media.js
           node --check firefox/media.js
           node --check chrome/popup.js
@@ -37,8 +39,8 @@ jobs:
           for folder in ('chrome','firefox'):
               manifest=json.loads((Path(folder)/'manifest.json').read_text())
               assert 'nativeMessaging' in manifest['permissions']
-              assert 'downloads' not in manifest['permissions']
-              assert 'storage' not in manifest['permissions']
+              assert 'downloads' in manifest['permissions']
+              assert 'storage' in manifest['permissions']
           PY_CHECK
       - name: Update service unit tests
         run: python -m unittest discover -s tests -p "test_update*.py" -v

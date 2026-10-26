@@ -20,11 +20,13 @@ async function add(url,kind=null) {
   return nativeRequest(kind?'stream':'add',{url,kind});
 }
 browser.runtime.onInstalled.addListener(()=>{
-  browser.contextMenus.create({id:'aura-link',title:'Download with AURA',contexts:['link']});
-  // Legacy browser tokens are revoked by the desktop upgrade.
+  browser.contextMenus.create({id:'aura-link',title:'Download with AURA',contexts:['link','image','video','audio']});
+  // Preserve auto-capture preference; clear only old pairing credentials.
+  browser.storage.local.remove('pairingToken');
+  capture.recover().catch(console.warn);
 });
 browser.contextMenus.onClicked.addListener(info=>{
-  if(info.menuItemId==='aura-link')add(info.linkUrl).catch(console.warn);
+  if(info.menuItemId==='aura-link')add((info.linkUrl || info.srcUrl)).catch(console.warn);
 });
 browser.runtime.onMessage.addListener(msg=>{
   if(!msg||!['aura.media.download','aura.download','aura.ping','aura.yt'].includes(msg.type))return;
@@ -36,3 +38,7 @@ browser.runtime.onMessage.addListener(msg=>{
   }
   return add(msg.url,msg.kind).then(data=>({ok:true,...data})).catch(e=>({ok:false,error:e.message}));
 });
+
+// Auto handoff starts enabled; users can disable it in the AURA popup.
+const capture=AuraCapture.register(browser,nativeRequest);
+browser.runtime.onStartup.addListener(()=>capture.recover().catch(console.warn));
