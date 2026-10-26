@@ -1,0 +1,40 @@
+{
+  "manifest_version": 2,
+  "name": "AURA Download Manager",
+  "version": "0.5.0",
+  "description": "Explicitly hand off downloads to your AURA desktop app.",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "http://127.0.0.1:18763/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "scripts": [
+      "worker.js"
+    ]
+  },
+  "browser_action": {
+    "default_title": "AURA Download Manager",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "aura-download-manager@local"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "media.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

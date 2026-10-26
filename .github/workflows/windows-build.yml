@@ -1,0 +1,63 @@
+name: Windows build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/windows/**"
+      - "requirements-windows.txt"
+      - ".github/workflows/windows-build.yml"
+  pull_request:
+    paths:
+      - "desktop/windows/**"
+      - "requirements-windows.txt"
+      - ".github/workflows/windows-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python packages
+        run: python -m pip install -r requirements-windows.txt
+      - name: Install aria2
+        run: choco install aria2 -y --no-progress
+      - name: Package Windows desktop
+        shell: pwsh
+        run: |
+          # Bundle the REAL aria2 binary, not Chocolatey's generated executable shim.
+          $packageDir = Join-Path $env:ChocolateyInstall 'lib/aria2'
+          $candidate = Get-ChildItem -Path $packageDir -Filter aria2c.exe -File -Recurse -ErrorAction Stop | Select-Object -First 1
+          if (!$candidate) { throw "Could not locate the actual aria2 executable" }
+          $aria = $candidate.FullName
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --add-data "assets/aura.png;assets" --add-binary "$aria;bin" desktop/windows/app.py
+      - name: Smoke test packaged files
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe')) { throw "Missing app binary" }
+          if (!(Test-Path 'dist/AURA-Download-Manager/_internal/bin/aria2c.exe')) { throw "Missing aria2 binary" }
+      - name: Test packaged aria2 engine
+        timeout-minutes: 3
+        shell: pwsh
+        run: |
+          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--self-test' -PassThru
+          if (!$proc.WaitForExit(45000)) { $proc.Kill(); throw 'Engine test timed out' }
+          if ($proc.ExitCode -ne 0) { throw "Bundled aria2 engine smoke test failed: $($proc.ExitCode)" }
+      - name: Test packaged Qt interface offscreen
+        timeout-minutes: 3
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $proc = Start-Process -FilePath (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe') -ArgumentList '--ui-smoke' -PassThru
+          if (!$proc.WaitForExit(45000)) { $proc.Kill(); throw 'UI test timed out' }
+          if ($proc.ExitCode -ne 0) { throw "Qt UI smoke test failed: $($proc.ExitCode)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AURA-Download-Manager-Windows
+          path: dist/AURA-Download-Manager/
+          retention-days: 14

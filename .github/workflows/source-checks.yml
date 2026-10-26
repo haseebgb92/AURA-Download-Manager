@@ -1,0 +1,36 @@
+name: Source checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile desktop sources
+        run: python -m py_compile desktop/linux/app.py desktop/windows/app.py
+      - name: Check browser JavaScript
+        run: |
+          node --check chrome/worker.js
+          node --check firefox/worker.js
+          node --check chrome/media.js
+          node --check firefox/media.js
+          node --check chrome/popup.js
+          node --check firefox/popup.js
+      - name: Extension unit tests
+        run: node --test tests/extension-worker.test.cjs
+      - name: Verify repository has no active token files
+        run: |
+          test ! -e bridge.token
+          test ! -e aria2.secret
+          test ! -e session.txt
