@@ -121,3 +121,34 @@ button.aura-primary:hover {
 .aura-inspector {
   background-image: linear-gradient(to right, #f6f8ff, #eaf5ff);
 }
+
+/* Single-screen Settings: two compact columns, no nested scroll panels. */
+.aura-settings-panel { padding-bottom: 4px; }
+.aura-settings-columns { padding: 0; }
+.aura-settings-card {
+  background-image: linear-gradient(to bottom right, #ffffff, #f8faff);
+  border: 1px solid #dfe6f5;
+  border-radius: 13px;
+  padding: 15px 16px;
+}
+.aura-settings-card-title { font-size: 14px; font-weight: 800; color: #253656; }
+.aura-settings-field { color: #3a4c68; font-size: 12px; }
+.aura-settings-card .aura-settings-note { color: #64758f; font-size: 11px; }
+.aura-settings-card spinbutton {
+  min-height: 29px;
+  padding: 3px 5px;
+  border-radius: 8px;
+}
+.aura-settings-card spinbutton button {
+  padding: 4px 6px;
+  min-height: 27px;
+  border-radius: 6px;
+}
+button.aura-settings-action {
+  min-height: 28px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.aura-settings-card checkbutton { padding: 2px 0; }
+.aura-settings-card checkbutton label { font-size: 11px; }

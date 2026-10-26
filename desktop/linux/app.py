@@ -259,6 +259,7 @@ class App:
         main.get_style_context().add_class('aura-content')
         content_scroll=Gtk.ScrolledWindow()
         content_scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC)
+        self.content_scroll=content_scroll
         content_scroll.add(main)
         workspace.pack_start(content_scroll,True,True,0)
         self.main=main
@@ -493,98 +494,141 @@ class App:
         self.details.hide()
         self.entry_data={}
 
-        self.settings_panel=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=17)
-        main.pack_start(self.settings_panel,True,True,0)
-        s_title=Gtk.Label(label='Download settings')
+        # Compact, no-scroll Settings workspace. Controls retain their original actions.
+        self.settings_panel=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=13)
+        self.settings_panel.get_style_context().add_class('aura-settings-panel')
+        self.settings_panel.set_valign(Gtk.Align.START)
+        main.pack_start(self.settings_panel,False,False,0)
+
+        settings_heading=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3)
+        self.settings_panel.pack_start(settings_heading,False,False,0)
+        s_title=Gtk.Label(label='Settings')
         s_title.set_xalign(0)
         s_title.get_style_context().add_class('aura-section-title')
-        self.settings_panel.pack_start(s_title,False,False,0)
-        caption=Gtk.Label(label='Tune performance and connect your browser. Changes take effect immediately.')
+        settings_heading.pack_start(s_title,False,False,0)
+        caption=Gtk.Label(label='Fine-tune transfers, pair your browser and manage updates.')
         caption.set_xalign(0)
         caption.get_style_context().add_class('aura-description')
-        self.settings_panel.pack_start(caption,False,False,0)
-        settings_group=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=20)
-        settings_group.get_style_context().add_class('aura-settings-group')
-        self.settings_panel.pack_start(settings_group,False,False,0)
+        settings_heading.pack_start(caption,False,False,0)
+
+        settings_columns=Gtk.Box(spacing=13)
+        settings_columns.get_style_context().add_class('aura-settings-columns')
+        self.settings_panel.pack_start(settings_columns,False,False,0)
+
+        settings_group=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10)
+        settings_group.get_style_context().add_class('aura-settings-card')
+        settings_group.set_hexpand(True)
+        settings_columns.pack_start(settings_group,True,True,0)
+
+        transfer_heading=Gtk.Box(spacing=8)
+        settings_group.pack_start(transfer_heading,False,False,0)
+        transfer_icon=Gtk.Image.new_from_icon_name('preferences-system-symbolic',Gtk.IconSize.BUTTON)
+        transfer_heading.pack_start(transfer_icon,False,False,0)
         section=Gtk.Label(label='Transfer performance')
         section.set_xalign(0)
-        section.get_style_context().add_class('aura-panel-title')
-        settings_group.pack_start(section,False,False,0)
-        grid=Gtk.Grid(column_spacing=30,row_spacing=17)
+        section.get_style_context().add_class('aura-settings-card-title')
+        transfer_heading.pack_start(section,True,True,0)
+
+        grid=Gtk.Grid(column_spacing=10,row_spacing=8)
+        grid.set_column_homogeneous(False)
         settings_group.pack_start(grid,False,False,0)
         self.setting_controls={}
         options=[
-            ('split','Connections per file (maximum 16)',1,16),
-            ('max-concurrent-downloads','Simultaneous downloads',1,20),
-            ('max-overall-download-limit','Total speed limit (KB/s, 0 = unlimited)',0,102400),
+            ('split','Connections per file',1,16,'Maximum 16 connections per file'),
+            ('max-concurrent-downloads','Simultaneous downloads',1,20,'Number of downloads at once'),
+            ('max-overall-download-limit','Speed limit (KB/s)',0,102400,'0 means unlimited'),
         ]
-        for row,(key,label,lower,upper) in enumerate(options):
+        for row,(key,label,lower,upper,hint) in enumerate(options):
             lab=Gtk.Label(label=label)
             lab.set_xalign(0)
             lab.set_hexpand(True)
+            lab.get_style_context().add_class('aura-settings-field')
+            lab.set_tooltip_text(hint)
             grid.attach(lab,0,row,1,1)
             control=Gtk.SpinButton.new_with_range(lower,upper,1)
             control.set_numeric(True)
-            control.set_size_request(140,-1)
+            control.set_width_chars(5)
+            control.set_size_request(105,-1)
+            control.set_tooltip_text(hint)
             grid.attach(control,1,row,1,1)
             self.setting_controls[key]=control
-        apply=Gtk.Button(label='Apply settings')
-        apply.get_style_context().add_class('aura-primary')
-        apply.connect('clicked',self.apply_settings)
-        settings_group.pack_start(apply,False,False,0)
-        pairing=Gtk.Box(spacing=15)
-        pairing.get_style_context().add_class('aura-settings-group')
-        self.settings_panel.pack_start(pairing,False,False,0)
-        pair_info=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=5)
-        pairing.pack_start(pair_info,True,True,0)
-        pair_label=Gtk.Label(label='Browser extension pairing')
-        pair_label.set_xalign(0)
-        pair_label.get_style_context().add_class('aura-panel-title')
-        pair_info.pack_start(pair_label,False,False,0)
-        pair_desc=Gtk.Label(label='Connect Chrome or Firefox with a code stored locally on this computer.')
-        pair_desc.set_xalign(0)
-        pair_desc.get_style_context().add_class('aura-settings-note')
-        pair_info.pack_start(pair_desc,False,False,0)
-        copy=Gtk.Button(label='Copy pairing code')
-        copy.connect('clicked',self.copy_pairing)
-        pairing.pack_end(copy,False,False,0)
 
-        update_group=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=12)
-        update_group.get_style_context().add_class('aura-settings-group')
-        self.settings_panel.pack_start(update_group,False,False,0)
-        update_title=Gtk.Label(label=f'AURA updates  •  Version {VERSION}')
+        transfer_footer=Gtk.Box(spacing=10)
+        settings_group.pack_end(transfer_footer,False,False,0)
+        transfer_note=Gtk.Label(label='Changes apply immediately.')
+        transfer_note.set_xalign(0)
+        transfer_note.get_style_context().add_class('aura-settings-note')
+        transfer_footer.pack_start(transfer_note,True,True,0)
+        apply=Gtk.Button(label='Save changes')
+        apply.get_style_context().add_class('aura-primary')
+        apply.get_style_context().add_class('aura-settings-action')
+        apply.connect('clicked',self.apply_settings)
+        transfer_footer.pack_end(apply,False,False,0)
+
+        right_column=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=13)
+        right_column.set_hexpand(True)
+        settings_columns.pack_start(right_column,True,True,0)
+
+        pairing=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8)
+        pairing.get_style_context().add_class('aura-settings-card')
+        right_column.pack_start(pairing,False,False,0)
+        pairing_row=Gtk.Box(spacing=8)
+        pairing.pack_start(pairing_row,False,False,0)
+        pair_label=Gtk.Label(label='Browser pairing')
+        pair_label.set_xalign(0)
+        pair_label.get_style_context().add_class('aura-settings-card-title')
+        pairing_row.pack_start(pair_label,True,True,0)
+        copy=Gtk.Button(label='Copy code')
+        copy.get_style_context().add_class('aura-settings-action')
+        copy.set_tooltip_text('Copy the local pairing code for the Chrome or Firefox extension')
+        copy.connect('clicked',self.copy_pairing)
+        pairing_row.pack_end(copy,False,False,0)
+        pair_desc=Gtk.Label(label='Connect Chrome or Firefox with one local code.')
+        pair_desc.set_xalign(0)
+        pair_desc.set_line_wrap(True)
+        pair_desc.get_style_context().add_class('aura-settings-note')
+        pairing.pack_start(pair_desc,False,False,0)
+
+        update_group=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10)
+        update_group.get_style_context().add_class('aura-settings-card')
+        right_column.pack_start(update_group,False,False,0)
+        update_heading=Gtk.Box(spacing=8)
+        update_group.pack_start(update_heading,False,False,0)
+        update_title=Gtk.Label(label=f'Updates  ·  v{VERSION}')
         update_title.set_xalign(0)
-        update_title.get_style_context().add_class('aura-panel-title')
-        update_group.pack_start(update_title,False,False,0)
-        update_row=Gtk.Box(spacing=12)
-        update_group.pack_start(update_row,False,False,0)
-        self.update_status=Gtk.Label(label='Check GitHub Releases for the latest AURA version.')
+        update_title.get_style_context().add_class('aura-settings-card-title')
+        update_heading.pack_start(update_title,True,True,0)
+        self.update_button=Gtk.Button(label='Check now')
+        self.update_button.get_style_context().add_class('aura-settings-action')
+        self.update_button.connect('clicked',self.check_updates)
+        update_heading.pack_end(self.update_button,False,False,0)
+
+        self.update_status=Gtk.Label(label='Official GitHub Releases')
         self.update_status.set_xalign(0)
         self.update_status.set_line_wrap(True)
+        self.update_status.set_max_width_chars(40)
         self.update_status.get_style_context().add_class('aura-settings-note')
-        update_row.pack_start(self.update_status,True,True,0)
-        self.update_button=Gtk.Button(label='Check for updates')
-        self.update_button.connect('clicked',self.check_updates)
-        update_row.pack_end(self.update_button,False,False,0)
+        update_group.pack_start(self.update_status,False,False,0)
+
+        update_actions=Gtk.Box(spacing=8)
+        update_group.pack_start(update_actions,False,False,0)
         self.get_update_button=Gtk.Button(label='Get update')
         self.get_update_button.get_style_context().add_class('aura-primary')
+        self.get_update_button.get_style_context().add_class('aura-settings-action')
         self.get_update_button.connect('clicked',self.open_update)
-        update_row.pack_end(self.get_update_button,False,False,0)
+        update_actions.pack_end(self.get_update_button,False,False,0)
         self.get_update_button.set_no_show_all(True)
         self.get_update_button.hide()
         self.update_url=RELEASES_URL
+
         self.update_prefs_file=ROOT/'update-preferences.json'
         try:self.update_prefs=json.loads(self.update_prefs_file.read_text())
         except (OSError,ValueError):self.update_prefs={}
-        self.auto_update=Gtk.CheckButton(label='Check for updates automatically (at most once daily)')
+        self.auto_update=Gtk.CheckButton(label='Check automatically')
+        self.auto_update.set_tooltip_text('Check at most once daily; installing updates is always your choice.')
         self.auto_update.set_active(bool(self.update_prefs.get('enabled',True)))
         self.auto_update.connect('toggled',self.save_update_preference)
-        update_group.pack_start(self.auto_update,False,False,0)
-        update_hint=Gtk.Label(label='Updates are verified against the official releases. Installing is always your choice.')
-        update_hint.set_xalign(0)
-        update_hint.set_line_wrap(True)
-        update_hint.get_style_context().add_class('aura-settings-note')
-        update_group.pack_start(update_hint,False,False,0)
+        update_actions.pack_start(self.auto_update,True,True,0)
 
         foot=Gtk.Box(spacing=9)
         foot.get_style_context().add_class('aura-footbar')
@@ -719,8 +763,17 @@ class App:
             else:ctx.remove_class('aura-nav-active')
         if hasattr(self,'settings_panel'):
             if mode=='settings':
-                self.download_area.hide();self.settings_panel.set_no_show_all(False);self.settings_panel.show_all();self.load_settings()
+                self.download_area.hide()
+                # Keep the scroll container size-bounded at compact window sizes;
+                # the layout fits without requiring visible scrollbars.
+                self.content_scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC)
+                self.settings_panel.set_no_show_all(False)
+                self.settings_panel.show_all()
+                if self.get_update_button.get_no_show_all():
+                    self.get_update_button.hide()
+                self.load_settings()
             else:
+                self.content_scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC)
                 self.settings_panel.hide();self.settings_panel.set_no_show_all(True);self.download_area.show_all()
                 self.listhead.set_text({'all':'All downloads','waiting':'Queued & paused','complete':'Completed downloads'}[mode])
         if hasattr(self,'filtered'):
@@ -749,7 +802,9 @@ class App:
         query=self.search.get_text().strip().casefold() if hasattr(self,'search') else ''
         return category and (not query or query in model[itr][0].casefold())
     def show(self):
-        self.win.show_all()
+        # The window was fully realized during startup; show_all here reveals
+        # inactive sections momentarily and can resize a compact Settings view.
+        self.win.show()
         self.set_view(self.view_filter)
         self.win.present()
     def hide(self,*_):self.win.hide();return True

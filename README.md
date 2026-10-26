@@ -6,6 +6,8 @@
 
 ## Updates and releases
 
+**v0.6.2 Settings redesign:** the installed Linux GTK app now shows transfer performance beside compact browser-pairing and update panels. All settings fit at the supported 930 × 580 minimum window size, without requiring scrolling. Controls, update checks, saved settings, and AURA identity are preserved. Reopening the window no longer expands it unexpectedly.
+
 **v0.6.1 Linux visual hotfix:** registers the bundled AURA icon as a valid user-level hicolor theme, rebuilds the icon cache, uses an absolute desktop launcher icon path, and strengthens the native GTK gradient surfaces. This corrects generic taskbar/menu icons and barely visible gradients on Linux Mint/Cinnamon. The Linux installer leaves download history, credentials, and existing transfer sessions intact.
 
 
