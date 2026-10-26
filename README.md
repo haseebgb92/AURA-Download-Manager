@@ -1,99 +1,140 @@
-# AURA Download Manager
+<p align="center">
+  <img src="assets/aura.png" alt="AURA Download Manager icon" width="104" height="104">
+</p>
 
-**AURA by Advertpreneur.** A clean, lightweight desktop download manager using **aria2** for direct HTTP(S) transfers. It supports a native GTK frontend on Linux, a Qt desktop frontend for Windows, and optional Chrome and Firefox browser handoff.
+<h1 align="center">AURA Download Manager</h1>
 
-**Product website:** https://haseebgb92.github.io/AURA-Download-Manager/ (available after GitHub Pages is enabled and deployment succeeds)
+<p align="center">
+  <strong>Fast downloads. A calmer desktop. By Advertpreneur.</strong><br>
+  A local-first download manager for Linux and Windows, with Chrome and Firefox integration.
+</p>
 
-## Updates and releases
+<p align="center">
+  <a href="https://github.com/haseebgb92/AURA-Download-Manager/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/haseebgb92/AURA-Download-Manager?style=flat-square"></a>
+  <a href="https://github.com/haseebgb92/AURA-Download-Manager/actions/workflows/source-checks.yml"><img alt="Source checks" src="https://github.com/haseebgb92/AURA-Download-Manager/actions/workflows/source-checks.yml/badge.svg"></a>
+  <img alt="Linux and Windows" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows-4f60c5?style=flat-square">
+</p>
 
-**v0.6.4 Automatic download capture:** Chrome and Firefox now listen for browser download events and automatically hand eligible HTTP(S) files to the AURA desktop manager. Images (PNG, JPEG, WebP, SVG, AVIF, GIF, HEIC and others), fonts, scripts, CSS and very small web assets stay in the browser. Private browsing, unsafe/download-warning files, and unsupported URL schemes are left untouched. A small toggle in the extension popup enables/disables automatic capture; default is on. Right-click **Download with AURA** works for links and images even when automatic capture is off.
+<p align="center">
+  <a href="https://github.com/haseebgb92/AURA-Download-Manager/releases/latest"><strong>Download latest release</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://haseebgb92.github.io/AURA-Download-Manager/">Product website</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/haseebgb92/AURA-Download-Manager/issues">Report an issue</a>
+</p>
 
-The extension pauses an eligible download, sends only its URL through native messaging, and cancels/cleans the browser copy **only if AURA acknowledges that the job was queued**. If AURA is unavailable, it resumes the paused browser job. Downloads that require browser cookies, POST requests or private sessions may fail later in aria2; use the browser for those cases. Some very small downloads can finish before AURA can intercept them and will remain in Chrome/Firefox. Auto-capture works only when the desktop app is running.
+---
 
+## Screenshots
 
+<table>
+  <tr><th width="70%">Linux desktop</th><th width="30%">Browser extension</th></tr>
+  <tr>
+    <td valign="top"><img src="assets/screenshots/desktop-linux.png" alt="AURA Linux desktop: sidebar, speed metrics, download controls and queue" width="790"></td>
+    <td valign="top"><img src="assets/screenshots/browser-extension.png" alt="AURA browser extension: auto-capture switch and desktop connection" width="345"></td>
+  </tr>
+  <tr>
+    <td><sub>Native Linux GTK interface, captured from the v0.6 desktop family with an empty queue.</sub></td>
+    <td><sub>Current extension interface, rendered in an isolated browser profile with a simulated connected state.</sub></td>
+  </tr>
+</table>
 
-**v0.6.3 Browser pairing upgrade:** no pairing codes. Chrome and Firefox use a browser-authorized native helper with a strict extension allowlist; the private desktop bridge token stays local. AURA automatically registers the helper on Linux installation and Windows startup (with the bundled helper). Reload an already installed extension once to pick up its new native-messaging permission. The previous browser-stored secret can be safely revoked.
+The screenshots contain no personal download history, credentials or private browser tabs. Windows uses a separate Qt interface; a Windows screenshot will be added after field testing.
 
+## Highlights
 
+- **Fast managed transfers:** independent open-source [aria2](https://github.com/aria2/aria2) engine, parallel HTTP(S) downloads, pause, resume, queues and bandwidth limits.
+- **Automatic capture:** Chrome and Firefox can hand eligible downloads to AURA. **Images stay in the browser by default**, as do fonts, scripts and small webpage assets.
+- **Download with AURA:** right-click links or images to download explicitly—even if auto-capture is off.
+- **Zero-code connection:** local browser native messaging; no pairing code and no browser access to the private desktop credential.
+- **Native UI:** download status, search, history, bulk controls, compact Settings, AURA icon and blue-violet gradients.
+- **Controlled updates:** checks official GitHub Releases without silently replacing files or restarting the app.
 
-**v0.6.2 Settings redesign:** the installed Linux GTK app now shows transfer performance beside compact browser-pairing and update panels. All settings fit at the supported 930 × 580 minimum window size, without requiring scrolling. Controls, update checks, saved settings, and AURA identity are preserved. Reopening the window no longer expands it unexpectedly.
+AURA is developed by **Advertpreneur**. aria2 is an independent download engine with its own [license and source](third_party/aria2/README.md).
 
-**v0.6.1 Linux visual hotfix:** registers the bundled AURA icon as a valid user-level hicolor theme, rebuilds the icon cache, uses an absolute desktop launcher icon path, and strengthens the native GTK gradient surfaces. This corrects generic taskbar/menu icons and barely visible gradients on Linux Mint/Cinnamon. The Linux installer leaves download history, credentials, and existing transfer sessions intact.
+## Downloads and installation
 
-
-
-Version **0.6.1** includes a built-in **Settings → AURA updates → Check for updates** control on Linux and Windows. It checks the official GitHub Releases API and compares version numbers in a background thread. The app can check automatically when launched (Linux: at most once daily; Windows: configurable at launch). If a newer stable version is found, **Get update** opens the official release details. Installation is deliberately user-controlled: **no silent file replacement, arbitrary code execution, or forced restarts**.
-
-Official packages are published by the [tag-triggered release workflow](.github/workflows/release.yml). They include Windows ZIP, Linux source installer archive, and SHA256 checksums. Unsigned packages may trigger platform warnings.
-
-## What is available
-
-| Component | Status | Source |
+| Platform | Download | Packaging |
 | --- | --- | --- |
-| Linux GTK desktop | Source included; derived from existing locally running app | `desktop/linux/` |
-| Windows Qt desktop | New Windows packaging workflow; native Windows runtime not yet field-tested | `desktop/windows/` |
-| Chrome browser extension | Automatic native connection; explicit link handoff | `chrome/` |
-| Firefox browser extension | Automatic native connection; explicit link handoff | `firefox/` |
-| Project website | Static GitHub Pages site | `docs/` |
+| **Linux** | [Latest Linux archive](https://github.com/haseebgb92/AURA-Download-Manager/releases/latest) | Native GTK app and installer script |
+| **Windows 10/11** | [Latest Windows ZIP](https://github.com/haseebgb92/AURA-Download-Manager/releases/latest) | Qt desktop app, currently unsigned |
 
-### Linux
+GitHub releases include SHA-256 checksums. The Windows package passes automated startup tests but has not yet been manually tested on a Windows PC.
 
-Requires Linux with GTK 3, Ayatana AppIndicator, `aria2c` and Python 3 GI bindings. On Debian/Ubuntu/Mint:
+### Linux Mint, Ubuntu, Debian
+
+From your terminal:
 
 ```bash
 sudo apt install aria2 python3-gi gir1.2-gtk-3.0 gir1.2-ayatanaappindicator3-0.1
+git clone https://github.com/haseebgb92/AURA-Download-Manager.git
+cd AURA-Download-Manager
 bash scripts/install-linux.sh
 ```
 
-**Installer behavior:** makes a timestamped backup of the existing `app.py`, installs GTK code and CSS, and creates a desktop launcher. It **does not** delete history or credentials.
+Alternatively, extract the Linux release archive and run `bash scripts/install-linux.sh` inside it.
 
-After installing, quit any older AURA process from its system tray and relaunch the app to load updated code.
+The installer registers the desktop launcher, AURA icon and browser helper; makes a timestamped backup of the existing UI file; and **does not delete downloads, history, credentials or sessions**. Relaunch AURA after installing.
 
 ### Windows
 
-The Windows desktop uses **PySide6** and aria2. The GitHub Actions [Windows build workflow](https://github.com/haseebgb92/AURA-Download-Manager/actions/workflows/windows-build.yml) bundles aria2 in the packaged app.
+Download the latest **Windows-x64.zip**, extract the entire archive, then start `AURA-Download-Manager.exe`. Keep `AURA-Native-Host.exe`, the `_internal` directory and extension folders together.
 
-After a successful workflow run, download the `AURA-Download-Manager-Windows` artifact, unzip it, and run `AURA-Download-Manager.exe` from its extracted directory. This is an **unsigned build**, not a signed installer. Windows SmartScreen may warn; verify the artifact comes from this repository's workflow before running it.
+The app is currently unsigned. Windows SmartScreen may warn; verify the release source and checksums before opening it.
 
-For local development, install aria2 and Python 3.12, then:
+## Chrome and Firefox extensions
 
-```powershell
-pip install -r requirements-windows.txt
-python desktop/windows/app.py
-```
+**Chrome:** open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the project's `chrome/` folder. Install/start the desktop app and reload the extension. If the extension was added after AURA's native messaging host was registered, rerun the Linux installer or restart AURA on Windows once.
 
-The Windows version supports HTTP(S) downloads, queue status, pause/resume, history removal, Recycle Bin deletion, and extension handoff. Linux-specific `yt-dlp` / `ffmpeg` stream workflows are **not yet ported** to Windows.
+**Firefox:** the add-on source is in `firefox/`. You can load it temporarily using `about:debugging` for testing. Permanent distribution requires Mozilla signing.
 
-### Browser extensions — zero-code connection (v0.6.3)
+The extension has an **Auto-capture downloads** switch, enabled by default. Eligible browser transfers pause while AURA confirms that it accepted the download. Chrome or Firefox cancels the browser copy after confirmation; if AURA is unavailable or rejects the handoff, it attempts to resume the browser download.
 
-**No pairing codes are required.** AURA uses standard Chrome/Firefox **Native Messaging**, with a per-user host manifest that authorizes only known AURA extension IDs. The browser never receives the local bridge credential.
+Images and common webpage assets remain in the browser. **Download with AURA** is available from the right-click menu for links and images. Downloads requiring cookies, login state or POST requests may need to stay in the browser.
 
-**Linux:** Run `bash scripts/install-linux.sh` once. It registers Firefox's fixed extension ID and discovers Chrome's installed unpacked AURA extension ID from its actual profile path. Install/update the extension in `chrome://extensions` → Developer mode → Load unpacked → select `chrome/`, then click that extension's **Reload** icon once. Chrome's native messaging permission is required. The extension then connects automatically whenever desktop AURA is running. Firefox temporary add-on loading via `about:debugging` works similarly, while permanent distribution requires Mozilla signing.
+## Source layout
 
-**Windows:** The ZIP contains `AURA-Native-Host.exe`, a copy of the browser extensions, and the desktop executable. Launching the desktop app installs user-level native messaging manifests (no administrator access). Chrome installation is recognized when the unpacked extension's script matches the shipped AURA extension. After adding the unpacked Chrome extension, restart the desktop app once to register its browser ID, then reload the extension. Firefox uses its stable signed extension ID.
-
-The extension popup automatically shows whether desktop AURA is connected; clicking **Check connection** is optional. With auto-capture enabled, eligible browser downloads transfer to AURA; images and excluded web assets remain in the browser. The popup toggle disables automatic capture without affecting the manual right-click action. Do not modify or share `bridge.token`.
+| Path | Contains |
+| --- | --- |
+| `desktop/linux/` | Linux GTK desktop |
+| `desktop/windows/` | Windows Qt desktop |
+| `desktop/common/` | Update service, native messaging, host registration |
+| `chrome/`, `firefox/` | Browser extensions |
+| `scripts/` | Install and registration helpers |
+| `assets/` | Brand icon and documentation screenshots |
+| `docs/` | GitHub Pages product website |
+| `tests/` | Source and browser integration tests |
+| `.github/workflows/` | CI, Windows builds and release automation |
 
 ## Privacy and security
 
-- Browser bridge binds to `127.0.0.1:18763`; aria2 RPC binds to `127.0.0.1:18764`.
-- The bridge requires a randomly generated local pairing token for every request. It is saved in `~/.local/share/aura-download-manager/bridge.token` on Linux, under LocalAppData on Windows.
-- **Never commit `bridge.token`, `aria2.secret`, cookies, or local session files.**
-- Existing old extension builds contained a fixed token in source; **rotate the token before making any earlier commit history public**.
-- The desktop app does not transfer files to any third-party cloud by itself; downloads connect to the user-provided server.
+AURA's desktop bridge and aria2 RPC bind to `127.0.0.1`, not the public network. The browser-native host uses a restricted extension allowlist. Neither an Advertpreneur cloud service nor the browser extension receives your downloaded files. Never commit or share `bridge.token`, `aria2.secret`, cookies or session data.
 
-## Development
+## Version history
+
+<details>
+<summary>Recent releases (v0.6.1–v0.6.4)</summary>
+
+- **v0.6.4** — automatic download capture, image exclusions and the browser on/off switch.
+- **v0.6.3** — local native messaging and automatic browser pairing.
+- **v0.6.2** — compact two-column Linux Settings.
+- **v0.6.1** — Linux icon registration and more visible gradients.
+
+[All releases](https://github.com/haseebgb92/AURA-Download-Manager/releases).
+
+</details>
+
+## Development and contributions
 
 ```bash
 python3 -m py_compile desktop/linux/app.py desktop/windows/app.py
-node --check chrome/worker.js
-node --check chrome/popup.js
-node --check firefox/worker.js
-node --check firefox/popup.js
+python3 -m unittest discover -s tests -p 'test_native_host.py'
+python3 -m unittest discover -s tests -p 'test_update_service.py'
+node --test tests/extension-worker.test.cjs
 ```
 
-The website's interactive download table is **sample UI data**, not live download telemetry.
+Issues and suggestions are welcome. **This repository does not yet have an open-source license.** Public visibility does not grant reuse or redistribution rights; the project owner can add a license separately.
 
-## Project contributions
+---
 
-Issues and pull requests are welcome. This repository does **not** yet declare an open-source license; viewing public source does not automatically grant reuse rights. A license may be added by the owner.
+<p align="center"><sub>Made by <strong>Advertpreneur</strong> · Commerce. Growth. Technology.</sub></p>
