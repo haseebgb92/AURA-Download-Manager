@@ -4,11 +4,15 @@ on:
     branches: [main]
     paths:
       - "desktop/windows/**"
+      - "desktop/common/**"
+      - "assets/**"
       - "requirements-windows.txt"
       - ".github/workflows/windows-build.yml"
   pull_request:
     paths:
       - "desktop/windows/**"
+      - "desktop/common/**"
+      - "assets/**"
       - "requirements-windows.txt"
       - ".github/workflows/windows-build.yml"
   workflow_dispatch:
@@ -34,7 +38,7 @@ jobs:
           $candidate = Get-ChildItem -Path $packageDir -Filter aria2c.exe -File -Recurse -ErrorAction Stop | Select-Object -First 1
           if (!$candidate) { throw "Could not locate the actual aria2 executable" }
           $aria = $candidate.FullName
-          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --add-data "assets/aura.png;assets" --add-binary "$aria;bin" desktop/windows/app.py
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --paths desktop/common --add-data "assets/aura.png;assets" --add-data "third_party/aria2/COPYING;licenses/aria2" --add-binary "$aria;bin" desktop/windows/app.py
       - name: Smoke test packaged files
         shell: pwsh
         run: |

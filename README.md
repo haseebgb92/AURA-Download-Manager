@@ -1,8 +1,14 @@
 # AURA Download Manager
 
-A clean, lightweight desktop download manager using **aria2** for direct HTTP(S) transfers. It supports a native GTK frontend on Linux, a Qt desktop frontend for Windows, and optional Chrome and Firefox browser handoff.
+**AURA by Advertpreneur.** A clean, lightweight desktop download manager using **aria2** for direct HTTP(S) transfers. It supports a native GTK frontend on Linux, a Qt desktop frontend for Windows, and optional Chrome and Firefox browser handoff.
 
 **Product website:** https://haseebgb92.github.io/AURA-Download-Manager/ (available after GitHub Pages is enabled and deployment succeeds)
+
+## Updates and releases
+
+Version **0.6.0** includes a built-in **Settings → AURA updates → Check for updates** control on Linux and Windows. It checks the official GitHub Releases API and compares version numbers in a background thread. The app can check automatically when launched (Linux: at most once daily; Windows: configurable at launch). If a newer stable version is found, **Get update** opens the official release details. Installation is deliberately user-controlled: **no silent file replacement, arbitrary code execution, or forced restarts**.
+
+Official packages are published by the [tag-triggered release workflow](.github/workflows/release.yml). They include Windows ZIP, Linux source installer archive, and SHA256 checksums. Unsigned packages may trigger platform warnings.
 
 ## What is available
 
@@ -52,7 +58,11 @@ Browser downloads are **not captured automatically**. No `downloads.onCreated` l
 
 For Linux YouTube downloads, additional local `yt-dlp` and `ffmpeg` dependencies may be needed. Only download media you are authorized to access.
 
-### Privacy and security
+### Branding and third-party attribution
+
+AURA Download Manager is developed by **Advertpreneur**. It uses aria2 as a separate local transfer engine. The [aria2 license and upstream attribution](third_party/aria2/README.md) are included with Windows binary packages. AURA's interface, branding, and product identity are distinct from the engine.
+
+## Privacy and security
 
 - Browser bridge binds to `127.0.0.1:18763`; aria2 RPC binds to `127.0.0.1:18764`.
 - The bridge requires a randomly generated local pairing token for every request. It is saved in `~/.local/share/aura-download-manager/bridge.token` on Linux, under LocalAppData on Windows.

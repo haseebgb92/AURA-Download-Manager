@@ -1,0 +1,93 @@
+name: Publish AURA release
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Linux Python sources
+        run: |
+          python3 -m py_compile desktop/linux/app.py desktop/common/update_service.py
+          python3 -m unittest discover -s tests -p 'test_update*.py' -v
+      - name: Build Linux source installer archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf "AURA-Download-Manager-${GITHUB_REF_NAME}-Linux.tar.gz" \
+            desktop/linux desktop/common scripts/install-linux.sh assets/aura.png README.md third_party/aria2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aura-release-linux
+          path: AURA-Download-Manager-v*-Linux.tar.gz
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build requirements
+        run: python -m pip install -r requirements-windows.txt
+      - name: Install aria2
+        run: choco install aria2 -y --no-progress
+      - name: Package Windows app
+        shell: pwsh
+        run: |
+          $folder = Join-Path $env:ChocolateyInstall 'lib/aria2'
+          $candidate = Get-ChildItem -Path $folder -Filter aria2c.exe -File -Recurse | Select-Object -First 1
+          if (!$candidate) { throw 'Missing real aria2 executable' }
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --paths desktop/common --add-data "assets/aura.png;assets" --add-data "third_party/aria2/COPYING;licenses/aria2" --add-binary "$($candidate.FullName);bin" desktop/windows/app.py
+      - name: Verify bundled application
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $exe = (Resolve-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe').Path
+          foreach ($arg in @('--self-test', '--ui-smoke')) {
+            $proc = Start-Process -FilePath $exe -ArgumentList $arg -PassThru
+            if (!$proc.WaitForExit(45000)) { $proc.Kill(); throw "Timed out: $arg" }
+            if ($proc.ExitCode -ne 0) { throw "Runtime smoke check failed: $arg" }
+          }
+          if (!(Test-Path 'dist/AURA-Download-Manager/_internal/bin/aria2c.exe')) { throw 'Missing aria2 binary' }
+      - name: Archive Windows binary
+        shell: pwsh
+        run: |
+          Compress-Archive -Path 'dist/AURA-Download-Manager/*' -DestinationPath "AURA-Download-Manager-$env:GITHUB_REF_NAME-Windows-x64.zip" -CompressionLevel Optimal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aura-release-windows
+          path: AURA-Download-Manager-v*-Windows-x64.zip
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [linux, windows]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: aura-release-*
+          path: packages
+          merge-multiple: true
+      - name: Check archives and generate checksums
+        run: |
+          set -euo pipefail
+          cd packages
+          ls -lh AURA-Download-Manager-v*-Linux.tar.gz AURA-Download-Manager-v*-Windows-x64.zip
+          sha256sum AURA-Download-Manager-v*-Linux.tar.gz AURA-Download-Manager-v*-Windows-x64.zip > SHA256SUMS.txt
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            packages/AURA-Download-Manager-v*-Linux.tar.gz \
+            packages/AURA-Download-Manager-v*-Windows-x64.zip \
+            packages/SHA256SUMS.txt \
+            --title "AURA Download Manager $GITHUB_REF_NAME" \
+            --notes "AURA by Advertpreneur. Linux GTK and Windows Qt desktops, improved gradients and icons, controlled download management, and built-in GitHub Releases update checking. The Windows build is unsigned; verify checksums before installation. Existing installations can check for updates from Settings."

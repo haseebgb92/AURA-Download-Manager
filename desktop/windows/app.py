@@ -8,18 +8,24 @@ import shutil
 import subprocess
 import sys
 import threading
+import webbrowser
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from PySide6.QtCore import Qt, QThread, QTimer, Signal, QItemSelectionModel
-from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QPixmap
 from PySide6.QtWidgets import (
     QApplication, QAbstractItemView, QCheckBox, QComboBox, QFormLayout, QFrame,
     QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow, QMessageBox,
     QPushButton, QSpinBox, QStyle, QTabWidget, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget, QFileDialog
 )
+
+COMMON_DIR = pathlib.Path(__file__).resolve().parents[1] / "common"
+if COMMON_DIR.is_dir():
+    sys.path.insert(0, str(COMMON_DIR))
+from update_service import VERSION, RELEASES_URL, check_for_updates
 
 APP_DIR = pathlib.Path(os.getenv("LOCALAPPDATA") or pathlib.Path.home() / ".local/share") / "AURA-Download-Manager"
 APP_DIR.mkdir(parents=True, exist_ok=True)
@@ -186,26 +192,62 @@ class Snapshot(QThread):
                              "speed": sum(int(e.get("downloadSpeed") or 0) for e in active)})
         except Exception as exc: self.failed.emit(str(exc))
 
+class ReleaseWorker(QThread):
+    ready = Signal(object)
+    failed = Signal(str)
+    def run(self):
+        try:
+            self.ready.emit(check_for_updates(VERSION))
+        except Exception as error:
+            self.failed.emit(str(error))
+
 CSS = """
-QMainWindow, QWidget#base {background:#f6f8fc;color:#26354d}
-QWidget {font-family:'Segoe UI',sans-serif;font-size:12px}
-QLabel#heading{font-size:23px;font-weight:750;color:#172b49}
-QLabel#hint{color:#60728b}
-QLabel#metric{font-size:17px;font-weight:700;color:#174ea6}
-QPushButton{background:#fff;border:1px solid #dbe3ef;border-radius:8px;padding:9px 11px;color:#273955}
-QPushButton:hover{background:#eaf2ff;border-color:#a8c5ee}
-QPushButton:pressed{background:#d9eaff}
-QPushButton:disabled{background:#f0f3f8;color:#99a6ba}
-QPushButton#primary{background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700}
-QPushButton#primary:hover{background:#1d51c4}
-QLineEdit, QSpinBox, QComboBox{background:#fff;border:1px solid #d7e0ec;border-radius:8px;padding:9px 11px;color:#26354d}
-QLineEdit:focus, QSpinBox:focus{border:2px solid #2563eb}
-QTableWidget{background:#fff;color:#243249;border:1px solid #e0e7f0;border-radius:10px;gridline-color:transparent;selection-background-color:#dfedff;selection-color:#1a457e}
-QHeaderView::section{background:#f5f8fd;border:none;border-bottom:1px solid #e3eaf3;padding:10px;text-align:left;color:#63758d;font-weight:700}
-QTabWidget::pane{border:0;background:transparent}
-QTabBar::tab{padding:12px 18px;margin-right:8px;color:#63758d;border-bottom:2px solid transparent}
-QTabBar::tab:selected{color:#2563eb;border-color:#2563eb;font-weight:700}
-QMessageBox{background:#fff}
+QMainWindow, QWidget#base { background:#f4f6fb; color:#243450; }
+QLabel#subhead { color:#72829b; font-size:12px; font-weight:600; }
+QWidget { font-family:'Segoe UI', 'Inter', sans-serif; font-size:13px; color:#30405b; }
+QLabel#heading { font-size:25px; font-weight:800; color:#1c2d4c; }
+QLabel#hint { color:#72829b; font-size:12px; }
+QLabel#metric { font-size:26px; font-weight:800; color:#202c53; }
+QPushButton {
+    background:#ffffff; color:#405571; border:1px solid #dfe6f1;
+    border-radius:10px; padding:10px 14px; min-height:22px; font-weight:600;
+}
+QPushButton:hover { background:#f0f4ff; border-color:#b3c1f9; color:#4853c9; }
+QPushButton:pressed { background:#e6ebff; }
+QPushButton:focus { border:2px solid #8392ed; }
+QPushButton:disabled { background:#f7f8fb; border-color:#eef1f6; color:#a5afbe; }
+QPushButton#primary { background:qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #6a7af0,stop:1 #4b53c9); color:#fff; border-color:#5964dd; font-weight:700; }
+QPushButton#primary:hover { background:qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #596ae0,stop:1 #3d46ad); color:#fff; }
+QLineEdit, QSpinBox, QComboBox {
+    background:#f9fbff; border:1px solid #e1e7f0; border-radius:10px;
+    padding:10px 13px; color:#243450; selection-background-color:#e8edff;
+    selection-color:#2f3978;
+}
+QLineEdit:focus, QSpinBox:focus, QComboBox:focus { border:2px solid #8392ed; background:#fff; }
+QTableWidget {
+    background:#fff; color:#31415b; border:1px solid #e3eaf3; border-radius:13px;
+    gridline-color:transparent; alternate-background-color:#fbfcff;
+    selection-background-color:#e9edff; selection-color:#2f3978;
+    padding:4px;
+}
+QTableWidget::item { padding:9px 12px; border:none; }
+QHeaderView::section {
+    background:#f8faff; color:#7b889d; border:none; border-bottom:1px solid #e8edf6;
+    font-size:11px; font-weight:700; padding:12px 13px; text-align:left;
+}
+QTabWidget::pane { border:0; background:transparent; }
+QTabBar::tab {
+    background:#ffffff; border:1px solid #e5eaf3; border-radius:10px;
+    padding:11px 19px; margin-right:7px; color:#5a6b86; font-weight:600;
+}
+QTabBar::tab:selected { background:qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #e3e9ff,stop:1 #f0f6ff); color:#424cce; border-color:#d8e0ff; font-weight:700; }
+QTabBar::tab:hover:!selected { background:#f1f5fc; }
+QProgressBar { background:#eef1f9; border:0; border-radius:7px; color:#263853; text-align:center; }
+QProgressBar::chunk { background:#6672e6; border-radius:7px; }
+QScrollBar:vertical { background:transparent; width:10px; margin:0; }
+QScrollBar::handle:vertical { background:#c4cce0; border-radius:5px; min-height:28px; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height:0; }
+QMessageBox { background:#fff; }
 """
 
 def nice_size(n: int) -> str:
@@ -229,12 +271,26 @@ class MainWindow(QMainWindow):
         root.setObjectName("base")
         self.setCentralWidget(root)
         outer = QVBoxLayout(root)
-        outer.setContentsMargins(24, 22, 24, 18)
+        outer.setContentsMargins(28, 26, 28, 20)
         outer.setSpacing(16)
+        head = QHBoxLayout()
+        head.setSpacing(13)
+        icon_path = pathlib.Path(getattr(sys, "_MEIPASS", pathlib.Path(__file__).resolve().parents[2])) / "assets" / "aura.png"
+        if icon_path.is_file():
+            artwork=QLabel()
+            artwork.setPixmap(QPixmap(str(icon_path)).scaled(48,48,Qt.KeepAspectRatio,Qt.SmoothTransformation))
+            head.addWidget(artwork)
+        brand = QVBoxLayout()
+        brand.setSpacing(3)
         title = QLabel("AURA Download Manager")
         title.setObjectName("heading")
-        outer.addWidget(title)
-        intro = QLabel("Fast parallel downloads, a cleaner queue, and explicit browser handoff.")
+        brand.addWidget(title)
+        subtitle=QLabel("by Advertpreneur  ·  v" + VERSION)
+        subtitle.setObjectName("subhead")
+        brand.addWidget(subtitle)
+        head.addLayout(brand,1)
+        outer.addLayout(head)
+        intro = QLabel("Your downloads, progress and files — all in one place.")
         intro.setObjectName("hint")
         outer.addWidget(intro)
         bar = QHBoxLayout()
@@ -249,7 +305,7 @@ class MainWindow(QMainWindow):
         self.metrics = {}
         for key, label in (("active","Active"),("complete","Completed"),("waiting","Queued"),("speed","Download speed")):
             frame = QFrame()
-            frame.setStyleSheet("QFrame{background:white;border:1px solid #e4eaf2;border-radius:11px} QLabel{border:none}")
+            frame.setStyleSheet("QFrame{background:qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #ffffff,stop:1 #f4f7ff);border:1px solid #e4eaf2;border-radius:14px} QLabel{border:none;background:transparent}")
             area = QVBoxLayout(frame)
             label_widget = QLabel(label)
             label_widget.setObjectName("hint")
@@ -306,6 +362,25 @@ class MainWindow(QMainWindow):
         sf.addRow("Concurrent downloads",self.concurrent)
         sf.addRow("",self.button("Apply settings",QStyle.SP_DialogApplyButton,self.save_settings,primary=True))
         sf.addRow("Browser extension",self.button("Copy pairing code",QStyle.SP_DialogSaveButton,self.copy_pairing))
+        self.update_worker=None
+        self.update_url=RELEASES_URL
+        update_row=QHBoxLayout()
+        self.check_btn=self.button("Check for updates",QStyle.SP_BrowserReload,self.check_updates)
+        self.get_btn=self.button("Get update",QStyle.SP_ArrowDown,self.get_update,primary=True)
+        self.get_btn.hide()
+        update_row.addWidget(self.check_btn)
+        update_row.addWidget(self.get_btn)
+        update_row.addStretch()
+        update_box=QWidget(); update_box.setLayout(update_row)
+        sf.addRow(f"AURA updates · v{VERSION}",update_box)
+        self.update_notice=QLabel("Check official GitHub Releases for a newer version.")
+        self.update_notice.setWordWrap(True)
+        self.update_notice.setObjectName("hint")
+        sf.addRow("",self.update_notice)
+        self.auto_update=QCheckBox("Check for updates automatically on launch")
+        self.auto_update.setChecked(CONFIG.get("check_updates",True))
+        self.auto_update.toggled.connect(self.persist_update_preference)
+        sf.addRow("",self.auto_update)
         info=QLabel("Only explicitly submitted links are sent to AURA. Pairing codes remain on your computer.")
         info.setWordWrap(True);info.setObjectName("hint");sf.addRow("",info)
         self.tabs.addTab(settings,"Settings")
@@ -314,6 +389,41 @@ class MainWindow(QMainWindow):
         outer.addWidget(self.label)
         self.timer=QTimer(self);self.timer.timeout.connect(self.refresh);self.timer.start(2500)
         self.refresh()
+        if self.auto_update.isChecked():
+            QTimer.singleShot(2500,self.check_updates)
+
+    def persist_update_preference(self,enabled):
+        CONFIG["check_updates"]=bool(enabled)
+        try:(APP_DIR/"config.json").write_text(json.dumps(CONFIG,indent=2),encoding="utf-8")
+        except OSError:self.label.setText("Could not save update preference.")
+
+    def check_updates(self):
+        if self.update_worker and self.update_worker.isRunning():
+            return
+        self.check_btn.setEnabled(False)
+        self.get_btn.hide()
+        self.update_notice.setText("Checking official releases…")
+        self.update_worker=ReleaseWorker()
+        self.update_worker.ready.connect(self.update_result)
+        self.update_worker.failed.connect(self.update_failed)
+        self.update_worker.finished.connect(lambda:self.check_btn.setEnabled(True))
+        self.update_worker.start()
+
+    def update_result(self,info):
+        if info.state=="available":
+            self.update_url=info.url
+            self.update_notice.setText(f"AURA v{info.version} is available.")
+            self.get_btn.show()
+        elif info.state=="current":
+            self.update_notice.setText(f"You have the latest version (v{VERSION}).")
+        else:
+            self.update_notice.setText("No stable AURA release has been published yet.")
+
+    def update_failed(self,error):
+        self.update_notice.setText("Update check unavailable: "+error)
+
+    def get_update(self):
+        webbrowser.open(self.update_url)
 
     def button(self,text,icon,callback,primary=False):
         b=QPushButton(text)
@@ -407,7 +517,8 @@ class MainWindow(QMainWindow):
                 "max-concurrent-downloads":str(self.concurrent.value())
             }])
             DOWNLOADS=path
-            (APP_DIR/"config.json").write_text(json.dumps({"downloads":str(path)},indent=2),encoding="utf-8")
+            CONFIG.update({"downloads":str(path),"check_updates":self.auto_update.isChecked()})
+            (APP_DIR/"config.json").write_text(json.dumps(CONFIG,indent=2),encoding="utf-8")
             self.label.setText("Settings applied and saved.")
         except Exception as exc:self.label.setText("Settings error: "+str(exc))
 
@@ -488,6 +599,12 @@ def main():
         os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
     app=QApplication(sys.argv)
     app.setApplicationName("AURA Download Manager")
+    if os.name=="nt":
+        import ctypes
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Advertpreneur.AURA.DownloadManager")
+        except Exception:
+            pass
     icon = pathlib.Path(getattr(sys,"_MEIPASS",pathlib.Path(__file__).resolve().parents[2])) / "assets" / "aura.png"
     if icon.is_file():
         app.setWindowIcon(QIcon(str(icon)))
@@ -503,6 +620,7 @@ def main():
         QMessageBox.critical(None,"AURA browser bridge",f"Could not start local bridge: {exc}")
         return 1
     win=MainWindow()
+    if not app.windowIcon().isNull():win.setWindowIcon(app.windowIcon())
     win.show()
     if ui_smoke:
         for index in (1,2,3,0):

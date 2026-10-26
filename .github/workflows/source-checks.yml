@@ -27,6 +27,8 @@ jobs:
           node --check firefox/media.js
           node --check chrome/popup.js
           node --check firefox/popup.js
+      - name: Update service unit tests
+        run: python -m unittest discover -s tests -p "test_update*.py" -v
       - name: Extension unit tests
         run: node --test tests/extension-worker.test.cjs
       - name: Verify repository has no active token files

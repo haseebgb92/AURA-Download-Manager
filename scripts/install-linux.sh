@@ -15,6 +15,7 @@ if [ -f "$target/app.py" ]; then
   cp "$target/app.py" "$target/app.py.backup-$(date +%Y%m%d-%H%M%S)"
 fi
 install -m 644 "$root/desktop/linux/app.py" "$target/app.py"
+install -m 644 "$root/desktop/common/update_service.py" "$target/update_service.py"
 install -m 644 "$root/desktop/linux/style.css" "$target/style.css"
 install -m 644 "$root/assets/aura.png" "$HOME/.local/share/icons/hicolor/256x256/apps/aura-download-manager.png"
 cat > "$HOME/.local/bin/aura-download-manager" <<'SCRIPT'
@@ -25,12 +26,13 @@ chmod +x "$HOME/.local/bin/aura-download-manager"
 cat > "$HOME/.local/share/applications/aura-download-manager.desktop" <<EOF
 [Desktop Entry]
 Name=AURA Download Manager
-Comment=Fast, managed downloads using aria2
+Comment=AURA Download Manager by Advertpreneur
 Exec=$HOME/.local/bin/aura-download-manager
 Icon=aura-download-manager
 Type=Application
 Categories=Network;FileTransfer;
 Terminal=false
 StartupNotify=true
+StartupWMClass=aura-download-manager
 EOF
 echo "Installed AURA. Relaunch it from your application menu."
