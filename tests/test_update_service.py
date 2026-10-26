@@ -21,7 +21,7 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(release.state,'available')
         self.assertEqual(release.version,'0.7.0')
     def test_current_release(self):
-        self.assertEqual(resolve_release({**BASE,'tag_name':'v0.6.0'}).state,'current')
+        self.assertEqual(resolve_release({**BASE,'tag_name':'v0.6.1'}).state,'current')
     def test_block_untrusted_url(self):
         self.assertEqual(resolve_release({**BASE,'html_url':'https://evil.example/trap'}).url,
                          'https://github.com/haseebgb92/AURA-Download-Manager/releases')
@@ -32,6 +32,6 @@ class ReleaseTests(unittest.TestCase):
         with mock.patch('urllib.request.urlopen',side_effect=error):
             self.assertEqual(check_for_updates().state,'unpublished')
     def test_version_constant(self):
-        self.assertEqual(VERSION,'0.6.0')
+        self.assertEqual(VERSION,'0.6.1')
 
 if __name__=='__main__':unittest.main()

@@ -6,7 +6,11 @@
 
 ## Updates and releases
 
-Version **0.6.0** includes a built-in **Settings → AURA updates → Check for updates** control on Linux and Windows. It checks the official GitHub Releases API and compares version numbers in a background thread. The app can check automatically when launched (Linux: at most once daily; Windows: configurable at launch). If a newer stable version is found, **Get update** opens the official release details. Installation is deliberately user-controlled: **no silent file replacement, arbitrary code execution, or forced restarts**.
+**v0.6.1 Linux visual hotfix:** registers the bundled AURA icon as a valid user-level hicolor theme, rebuilds the icon cache, uses an absolute desktop launcher icon path, and strengthens the native GTK gradient surfaces. This corrects generic taskbar/menu icons and barely visible gradients on Linux Mint/Cinnamon. The Linux installer leaves download history, credentials, and existing transfer sessions intact.
+
+
+
+Version **0.6.1** includes a built-in **Settings → AURA updates → Check for updates** control on Linux and Windows. It checks the official GitHub Releases API and compares version numbers in a background thread. The app can check automatically when launched (Linux: at most once daily; Windows: configurable at launch). If a newer stable version is found, **Get update** opens the official release details. Installation is deliberately user-controlled: **no silent file replacement, arbitrary code execution, or forced restarts**.
 
 Official packages are published by the [tag-triggered release workflow](.github/workflows/release.yml). They include Windows ZIP, Linux source installer archive, and SHA256 checksums. Unsigned packages may trigger platform warnings.
 

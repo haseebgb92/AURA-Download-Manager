@@ -18,6 +18,14 @@ install -m 644 "$root/desktop/linux/app.py" "$target/app.py"
 install -m 644 "$root/desktop/common/update_service.py" "$target/update_service.py"
 install -m 644 "$root/desktop/linux/style.css" "$target/style.css"
 install -m 644 "$root/assets/aura.png" "$HOME/.local/share/icons/hicolor/256x256/apps/aura-download-manager.png"
+# A standalone user hicolor directory is not a valid icon theme without index.theme.
+# Cinnamon/GTK otherwise fall back to the generic gear despite the PNG existing.
+if [ ! -f "$HOME/.local/share/icons/hicolor/index.theme" ]; then
+  install -m 644 /usr/share/icons/hicolor/index.theme "$HOME/.local/share/icons/hicolor/index.theme"
+fi
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache --force "$HOME/.local/share/icons/hicolor" >/dev/null
+fi
 cat > "$HOME/.local/bin/aura-download-manager" <<'SCRIPT'
 #!/bin/sh
 exec /usr/bin/python3 "$HOME/.local/share/aura-download-manager/app.py" "$@"
@@ -28,11 +36,14 @@ cat > "$HOME/.local/share/applications/aura-download-manager.desktop" <<EOF
 Name=AURA Download Manager
 Comment=AURA Download Manager by Advertpreneur
 Exec=$HOME/.local/bin/aura-download-manager
-Icon=aura-download-manager
+Icon=$HOME/.local/share/icons/hicolor/256x256/apps/aura-download-manager.png
 Type=Application
 Categories=Network;FileTransfer;
 Terminal=false
 StartupNotify=true
 StartupWMClass=aura-download-manager
 EOF
-echo "Installed AURA. Relaunch it from your application menu."
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
+fi
+echo "Installed AURA with registered icon theme. Relaunch it from your application menu."

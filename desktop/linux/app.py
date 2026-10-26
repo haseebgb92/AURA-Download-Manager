@@ -165,7 +165,9 @@ class App:
         self.win.set_wmclass('aura-download-manager','AURA Download Manager')
         app_icon=pathlib.Path.home()/'.local/share/icons/hicolor/256x256/apps/aura-download-manager.png'
         if app_icon.is_file():
-            self.win.set_icon_from_file(str(app_icon))
+            pixbuf=GdkPixbuf.Pixbuf.new_from_file(str(app_icon))
+            Gtk.Window.set_default_icon(pixbuf)
+            self.win.set_icon(pixbuf)
         else:
             self.win.set_icon_name('aura-download-manager')
         self.win.set_default_size(1230,790)
@@ -264,6 +266,7 @@ class App:
         main.pack_start(self.download_area,True,True,0)
 
         intro=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=5)
+        intro.get_style_context().add_class('aura-hero')
         self.download_area.pack_start(intro,False,False,0)
         intro_title=Gtk.Label(label='Download overview')
         intro_title.set_xalign(0)
@@ -280,6 +283,7 @@ class App:
         for key,caption,icon_name in [('active','ACTIVE','media-playback-start-symbolic'),('completed','COMPLETED','emblem-default-symbolic'),('speed','TOTAL SPEED','network-transmit-symbolic'),('queued','IN QUEUE','view-list-symbolic')]:
             card=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=9)
             card.get_style_context().add_class('aura-metric')
+            card.get_style_context().add_class('aura-metric-'+key)
             stats.pack_start(card,True,True,0)
             topline=Gtk.Box(spacing=9)
             i=Gtk.Image.new_from_icon_name(icon_name,Gtk.IconSize.BUTTON)

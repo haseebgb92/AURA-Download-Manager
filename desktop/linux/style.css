@@ -74,3 +74,50 @@ button.aura-primary { background-image: linear-gradient(130deg, #6677f0, #5159cf
 button.aura-primary:hover { background-image: linear-gradient(130deg, #5866df, #404bb6); border-color:#424fc0; }
 .aura-toolbar { background-image: linear-gradient(to right, #ffffff, #f8faff); }
 .aura-ready { background-image: linear-gradient(to right, #e7f8f1, #effaf8); }
+
+/* AURA visual identity: visibly layered indigo-to-cyan gradients, not near-white tinting. */
+.aura-topbar {
+  background-image: linear-gradient(to right, #dce7ff 0%, #f8faff 53%, #e0f5ff 100%);
+  border-bottom: 1px solid #cbdcf8;
+}
+.aura-hero {
+  background-image: linear-gradient(to right, #dde8ff 0%, #e5efff 54%, #d7f3ff 100%);
+  border: 1px solid #d0dff8;
+  border-radius: 15px;
+  padding: 21px 23px;
+}
+.aura-sidebar {
+  background-image: linear-gradient(to bottom, #f8faff, #e9f2ff);
+  border-right: 1px solid #dbe4f8;
+}
+.aura-metric {
+  background-image: linear-gradient(145deg, #ffffff, #e9efff);
+  border-color: #d8e3fb;
+}
+.aura-metric-active {
+  background-image: linear-gradient(140deg, #f1f1ff, #e2ecff);
+}
+.aura-metric-completed {
+  background-image: linear-gradient(140deg, #f0fff9, #e2f8f5);
+}
+.aura-metric-speed {
+  background-image: linear-gradient(140deg, #e9f5ff, #e1ecff);
+}
+.aura-metric-queued {
+  background-image: linear-gradient(140deg, #f8f1ff, #eae7ff);
+}
+.aura-toolbar {
+  background-image: linear-gradient(to right, #ffffff, #eaf1ff);
+  border-color: #d6e0f4;
+}
+button.aura-primary {
+  background-image: linear-gradient(to bottom right, #617ff5 0%, #535cdd 55%, #3d54c4 100%);
+  color: #ffffff;
+  border: 1px solid #4f5cd1;
+}
+button.aura-primary:hover {
+  background-image: linear-gradient(to bottom right, #4e6de8, #3848b5);
+}
+.aura-inspector {
+  background-image: linear-gradient(to right, #f6f8ff, #eaf5ff);
+}
