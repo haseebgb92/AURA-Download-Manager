@@ -1,23 +1,21 @@
 {
   "manifest_version": 3,
   "name": "AURA Download Manager",
-  "version": "0.4.1",
-  "description": "Direct media and non-DRM HLS/DASH manifest detection for AURA",
+  "version": "0.5.0",
+  "description": "Explicitly hand off downloads to your AURA desktop app.",
   "permissions": [
     "contextMenus",
-    "downloads",
     "storage"
   ],
   "host_permissions": [
-    "http://127.0.0.1:18763/*",
-    "http://*/*",
-    "https://*/*"
+    "http://127.0.0.1:18763/*"
   ],
   "background": {
     "service_worker": "worker.js"
   },
   "action": {
-    "default_title": "Toggle AURA automatic download capture"
+    "default_title": "AURA Download Manager",
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {

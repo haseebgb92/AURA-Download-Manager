@@ -38,8 +38,13 @@
   }
   document.addEventListener('play',scan,true);
   document.addEventListener('loadedmetadata',scan,true);
-  document.addEventListener('scroll',scan,{passive:true});
-  new MutationObserver(()=>scan()).observe(document.documentElement,{subtree:true,childList:true});
+  let scanTimer=null;
+  function scheduleScan(){
+    if(scanTimer!==null)return;
+    scanTimer=setTimeout(()=>{scanTimer=null;scan();},180);
+  }
+  document.addEventListener('scroll',scheduleScan,{passive:true});
+  new MutationObserver(scheduleScan).observe(document.documentElement,{subtree:true,childList:true});
   // YouTube uses client-side navigation; maintain one panel as videos change.
   let ytPanel=null;
   function syncYouTubePanel(){

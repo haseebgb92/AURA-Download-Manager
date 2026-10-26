@@ -1,38 +1,43 @@
-const token = 'XuRWMwiTVP3I2k_vgZeDR3VKPEEVz35iCizZv2P06Z8';
-async function downloadWithAura(url,kind) {
- const res = await fetch('http://127.0.0.1:18763/'+(kind?'stream':'add'), {method:'POST',headers:{'Content-Type':'application/json','X-Aura-Token':token},body:JSON.stringify({url,kind})});
- const data = await res.json();
- if (!data.ok) throw new Error(data.error || 'Could not send download');
+'use strict';
+const API = 'http://127.0.0.1:18763';
+const validUrl = url => {
+  try { const u = new URL(url); return ['http:', 'https:'].includes(u.protocol); }
+  catch { return false; }
+};
+async function request(path, payload) {
+  const { pairingToken } = await chrome.storage.local.get('pairingToken');
+  if (!pairingToken) throw Error('Pair AURA in the extension popup first.');
+  const response = await fetch(API + path, {
+    method: payload ? 'POST' : 'GET',
+    headers: { 'X-Aura-Token': pairingToken, ...(payload ? { 'Content-Type':'application/json' } : {}) },
+    ...(payload ? { body: JSON.stringify(payload) } : {})
+  });
+  let data;
+  try { data = await response.json(); }
+  catch { throw Error('Desktop AURA is not responding. Start the app first.'); }
+  if (!response.ok || data.ok === false) throw Error(data.error || 'AURA request failed.');
+  return data;
 }
-chrome.runtime.onInstalled.addListener(() => chrome.contextMenus.create({id:'aura',title:'Download with AURA',contexts:['link']}));
-chrome.contextMenus.onClicked.addListener(async info => {
- if(info.menuItemId !== 'aura') return;
- try {await downloadWithAura(info.linkUrl);}catch(error){console.error('AURA: '+error.message);}
+async function add(url, kind) {
+  if (!validUrl(url)) throw Error('Use a valid HTTP or HTTPS URL.');
+  return request(kind ? '/stream' : '/add', { url, kind, intent:'user' });
+}
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({ id:'aura-link', title:'Download with AURA', contexts:['link'] });
+  chrome.storage.local.remove('autoCapture'); // retire legacy interception preference
 });
-
-// Optional automatic capture, disabled by default to avoid disrupting normal browser downloads.
-chrome.downloads.onCreated.addListener(async item => {
- const settings=await chrome.storage.local.get('autoCapture');
- if(!settings.autoCapture || !(item.finalUrl||item.url||'').match(/^https?:/i) || item.byExtensionId)return;
- try {
-   await downloadWithAura(item.finalUrl||item.url);
-   await chrome.downloads.cancel(item.id);
-   await chrome.downloads.erase({id:item.id});
- } catch(err){console.warn('AURA kept Chrome download:',err.message);}
+chrome.contextMenus.onClicked.addListener(info => {
+  if (info.menuItemId === 'aura-link') add(info.linkUrl).catch(console.warn);
 });
-chrome.action.onClicked.addListener(async ()=>{
- const s=await chrome.storage.local.get('autoCapture');
- const next=!s.autoCapture;await chrome.storage.local.set({autoCapture:next});
- await chrome.action.setBadgeText({text:next?'ON':'OFF'});
- await chrome.action.setBadgeBackgroundColor({color:next?'#2968d9':'#64748b'});
+// The browser owns ordinary downloads. No downloads.onCreated listener.
+chrome.runtime.onMessage.addListener((msg, sender, reply) => {
+  if (!msg || !['aura.media.download','aura.download','aura.ping','aura.yt'].includes(msg.type)) return false;
+  let task;
+  if (msg.type === 'aura.ping') task = request('/status');
+  else if (msg.type === 'aura.yt') {
+    if (!['add','formats'].includes(msg.path) || !validUrl(msg.payload?.url)) task = Promise.reject(Error('Invalid media request.'));
+    else task = request('/yt/' + msg.path, msg.payload);
+  } else task = add(msg.url, msg.kind || null);
+  task.then(data => reply({ok:true,...data})).catch(e=>reply({ok:false,error:e.message}));
+  return true;
 });
-
-// Requests from the media overlay; the local bridge validates every request.
-chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
- if(msg?.type!=='aura.media.download')return false;
- downloadWithAura(msg.url,msg.kind).then(()=>reply({ok:true})).catch(e=>reply({ok:false,error:e.message}));
- return true;
-});
-
-async function auraYt(path,payload){const res=await fetch('http://127.0.0.1:18763/yt/'+path,{method:'POST',headers:{'Content-Type':'application/json','X-Aura-Token':token},body:JSON.stringify(payload)});const data=await res.json();if(!data.ok)throw Error(data.error||'YouTube request failed');return data;}
-chrome.runtime.onMessage.addListener((msg,sender,reply)=>{if(msg?.type!=='aura.yt')return false;auraYt(msg.path,msg.payload).then(reply).catch(e=>reply({ok:false,error:e.message}));return true;});

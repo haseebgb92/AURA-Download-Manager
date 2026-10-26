@@ -1,0 +1,27 @@
+window.aura-manager {background:#f7f9fd;color:#25354d;font-family:"Inter","Noto Sans",sans-serif}
+.aura-title{color:#142941;font-size:25px;font-weight:800;letter-spacing:-0.5px}
+.aura-subtitle{color:#5f738e;font-size:12px}
+.aura-card{background:#fff;border:1px solid #e2e9f3;border-radius:13px;padding:17px}
+.aura-toolbar{background:#fff;border:1px solid #e2e9f3;border-radius:12px;padding:12px}
+.aura-stat-number{color:#1c4d90;font-size:24px;font-weight:750;font-variant-numeric:tabular-nums}
+.aura-stat-label{color:#657790;font-size:11px;font-weight:700}
+button{background:#fff;color:#233a59;border:1px solid #dce5f1;border-radius:9px;padding:8px 12px;box-shadow:none;min-height:34px}
+button:hover{background:#edf4ff;border-color:#aac6ee;color:#195cc0}
+button:active{background:#dbeafe}
+button:focus{border-color:#699ff1}
+button:disabled{background:#f2f5f9;color:#8d9cb0;border-color:#e8edf3}
+button.aura-primary{color:#fff;background:#2563eb;border-color:#2563eb;font-weight:700}
+button.aura-primary:hover{background:#1c53c6;border-color:#1c53c6;color:#fff}
+entry{border:1px solid #d9e3f0;background:#fcfdff;border-radius:9px;padding:9px 12px;box-shadow:none;min-height:32px}
+entry:focus{border-color:#6196e7;background:#fff}
+treeview{background:#fff;color:#283954;font-size:12px}
+treeview:selected{background:#dfedff;color:#1b4d92}
+treeview:hover{background:#f4f8ff}
+treeview header button{border:0;border-bottom:1px solid #e7edf5;background:#f8faff;color:#5c708a;border-radius:0;box-shadow:none;font-size:11px;font-weight:700;padding:9px}
+scrollbar slider{background:#c5d3e7;border-radius:10px;min-width:7px;min-height:25px}
+scrollbar slider:hover{background:#9fb5d5}
+.aura-footnote{font-size:11px;color:#5a6f8a}
+.aura-sidebar{background:#fafdff;border:1px solid #e4ebf5;border-radius:12px;padding:12px}
+button.aura-nav{border:none;background:transparent;box-shadow:none;color:#536781;padding:12px 11px;border-radius:9px}
+button.aura-nav:hover{background:#eef5ff;color:#145bc2}
+button.aura-nav-active{background:#e5f0ff;color:#175fcb;font-weight:700}

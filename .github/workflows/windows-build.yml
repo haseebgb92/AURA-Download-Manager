@@ -1,0 +1,43 @@
+name: Windows build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/windows/**"
+      - "requirements-windows.txt"
+      - ".github/workflows/windows-build.yml"
+  pull_request:
+    paths:
+      - "desktop/windows/**"
+      - "requirements-windows.txt"
+      - ".github/workflows/windows-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python packages
+        run: python -m pip install -r requirements-windows.txt
+      - name: Install aria2
+        run: choco install aria2 -y --no-progress
+      - name: Package Windows desktop
+        shell: pwsh
+        run: |
+          $aria = (Get-Command aria2c.exe -ErrorAction Stop).Source
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --add-binary "$aria;bin" desktop/windows/app.py
+      - name: Smoke test packaged files
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe')) { throw "Missing app binary" }
+          if (!(Test-Path 'dist/AURA-Download-Manager/_internal/bin/aria2c.exe')) { throw "Missing aria2 binary" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AURA-Download-Manager-Windows
+          path: dist/AURA-Download-Manager/
+          retention-days: 14
