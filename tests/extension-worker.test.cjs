@@ -67,3 +67,41 @@ test('status requests use GET and a paired token',async()=>{
   assert.equal(h.reads[0].options.headers['X-Aura-Token'],'valid-pairing-token');
   assert.equal(h.reads[0].options.method,'GET');
 });
+
+function firefoxHarness(token = 'valid-pairing-token') {
+  const handlers = {};
+  const requests = [];
+  const browser = {
+    runtime: {
+      onInstalled: {addListener(fn){handlers.installed=fn}},
+      onMessage: {addListener(fn){handlers.message=fn}},
+    },
+    contextMenus:{
+      create() {},
+      onClicked:{addListener(fn){handlers.menu=fn}}
+    },
+    storage:{local:{async get(){return {pairingToken:token}}}}
+  };
+  vm.runInNewContext(fs.readFileSync('firefox/worker.js','utf8'),{
+    browser,URL,Promise,console,
+    fetch:async (url,options)=>{
+      requests.push({url,options});
+      return {ok:true,async json(){return {ok:true,gid:'firefox-test'}}};
+    }
+  });
+  return {handlers,requests};
+}
+test('Firefox handoff requires an explicit URL and local pairing',async()=>{
+  const f=firefoxHarness();
+  const response=await f.handlers.message({type:'aura.download',url:'https://example.org/guide.pdf'});
+  assert.equal(response.ok,true);
+  assert.equal(f.requests.length,1);
+  assert.equal(f.requests[0].url,'http://127.0.0.1:18763/add');
+  assert.equal(JSON.parse(f.requests[0].options.body).intent,'user');
+});
+test('Firefox does not enqueue unsupported URL schemes',async()=>{
+  const f=firefoxHarness();
+  const response=await f.handlers.message({type:'aura.download',url:'javascript:alert(1)'});
+  assert.equal(response.ok,false);
+  assert.equal(f.requests.length,0);
+});
