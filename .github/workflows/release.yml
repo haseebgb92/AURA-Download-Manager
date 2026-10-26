@@ -20,7 +20,7 @@ jobs:
         run: |
           set -euo pipefail
           tar -czf "AURA-Download-Manager-${GITHUB_REF_NAME}-Linux.tar.gz" \
-            desktop/linux desktop/common scripts/install-linux.sh assets/aura.png README.md third_party/aria2
+            desktop/linux desktop/common scripts/install-linux.sh scripts/aura-native-host scripts/register_native_host.py chrome firefox assets/aura.png README.md third_party/aria2
       - uses: actions/upload-artifact@v4
         with:
           name: aura-release-linux
@@ -44,6 +44,10 @@ jobs:
           $candidate = Get-ChildItem -Path $folder -Filter aria2c.exe -File -Recurse | Select-Object -First 1
           if (!$candidate) { throw 'Missing real aria2 executable' }
           python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --paths desktop/common --add-data "assets/aura.png;assets" --add-data "third_party/aria2/COPYING;licenses/aria2" --add-binary "$($candidate.FullName);bin" desktop/windows/app.py
+          python -m PyInstaller --noconfirm --clean --onefile --console --name AURA-Native-Host desktop/common/native_host.py
+          Copy-Item 'dist/AURA-Native-Host.exe' 'dist/AURA-Download-Manager/AURA-Native-Host.exe'
+          Copy-Item 'chrome' 'dist/AURA-Download-Manager/chrome' -Recurse
+          Copy-Item 'firefox' 'dist/AURA-Download-Manager/firefox' -Recurse
       - name: Verify bundled application
         shell: pwsh
         env:
@@ -55,6 +59,9 @@ jobs:
             if (!$proc.WaitForExit(45000)) { $proc.Kill(); throw "Timed out: $arg" }
             if ($proc.ExitCode -ne 0) { throw "Runtime smoke check failed: $arg" }
           }
+          if (!(Test-Path 'dist/AURA-Download-Manager/AURA-Native-Host.exe')) { throw 'Missing native browser helper' }
+          python tests/smoke_native_executable.py dist/AURA-Download-Manager/AURA-Native-Host.exe
+          if (!(Test-Path 'dist/AURA-Download-Manager/chrome/manifest.json')) { throw 'Missing Chrome extension' }
           if (!(Test-Path 'dist/AURA-Download-Manager/_internal/bin/aria2c.exe')) { throw 'Missing aria2 binary' }
       - name: Archive Windows binary
         shell: pwsh

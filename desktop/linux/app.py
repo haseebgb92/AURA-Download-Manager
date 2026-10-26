@@ -574,16 +574,14 @@ class App:
         right_column.pack_start(pairing,False,False,0)
         pairing_row=Gtk.Box(spacing=8)
         pairing.pack_start(pairing_row,False,False,0)
-        pair_label=Gtk.Label(label='Browser pairing')
+        pair_label=Gtk.Label(label='Browser connection')
         pair_label.set_xalign(0)
         pair_label.get_style_context().add_class('aura-settings-card-title')
         pairing_row.pack_start(pair_label,True,True,0)
-        copy=Gtk.Button(label='Copy code')
-        copy.get_style_context().add_class('aura-settings-action')
-        copy.set_tooltip_text('Copy the local pairing code for the Chrome or Firefox extension')
-        copy.connect('clicked',self.copy_pairing)
-        pairing_row.pack_end(copy,False,False,0)
-        pair_desc=Gtk.Label(label='Connect Chrome or Firefox with one local code.')
+        connected=Gtk.Label(label='Automatic')
+        connected.get_style_context().add_class('aura-settings-note')
+        pairing_row.pack_end(connected,False,False,0)
+        pair_desc=Gtk.Label(label='Chrome and Firefox connect automatically when AURA is open.')
         pair_desc.set_xalign(0)
         pair_desc.set_line_wrap(True)
         pair_desc.get_style_context().add_class('aura-settings-note')
@@ -809,12 +807,6 @@ class App:
         self.win.present()
     def hide(self,*_):self.win.hide();return True
     def quit(self):self.server.shutdown();Gtk.main_quit()
-    def copy_pairing(self,*_):
-        clipboard=Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        clipboard.set_text(TOKEN,-1)
-        clipboard.store()
-        self.status.set_text('Pairing code copied. Paste it in the AURA extension popup, then clear your clipboard.')
-
     def selection_changed(self,*_):
         if not hasattr(self,'tree') or not hasattr(self,'status'):return
         count=len(self.selected_gids())

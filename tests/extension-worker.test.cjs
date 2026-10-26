@@ -1,107 +1,78 @@
 'use strict';
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const vm = require('node:vm');
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
 
-function chromeHarness(token = 'valid-pairing-token') {
-  const handlers = {};
-  let reads = [];
-  const chrome = {
-    runtime: {
-      onInstalled: {addListener(fn){handlers.installed=fn}},
-      onMessage: {addListener(fn){handlers.message=fn}},
+function harness(browserName,reply={ok:true,gid:'test-download'}) {
+  const handlers={},requests=[],storeDeletes=[];
+  const api={
+    runtime:{
+      onInstalled:{addListener(fn){handlers.install=fn}},
+      onMessage:{addListener(fn){handlers.message=fn}},
+      async sendNativeMessage(host,message){
+        requests.push({host,message});
+        return reply;
+      }
     },
     contextMenus:{
-      create() {},
+      create(){},
       onClicked:{addListener(fn){handlers.menu=fn}}
     },
-    storage:{local:{
-      async get(){return {pairingToken:token}},
-      async remove(key){assert.equal(key,'autoCapture')}
-    }}
+    storage:{local:{async remove(k){storeDeletes.push(k)}}}
   };
-  const context = {chrome,URL,Promise,console,fetch:async (url,options)=>{
-    reads.push({url,options});
-    return {ok:true,async json(){return {ok:true,gid:'test-gid'}}};
-  }};
-  vm.runInNewContext(fs.readFileSync('chrome/worker.js','utf8'),context);
-  return {handlers,reads,chrome};
-}
-
-test('Chrome extension only captures explicit user actions', async()=>{
-  const h=chromeHarness();
-  assert.equal(h.chrome.downloads,undefined);
-  assert.equal(typeof h.handlers.installed,'function');
-  await h.handlers.installed();
-  const data=await new Promise(resolve=>{
-    const staysOpen=h.handlers.message({type:'aura.download',url:'https://example.com/file.zip'},null,resolve);
-    assert.equal(staysOpen,true);
+  vm.runInNewContext(fs.readFileSync(browserName+'/worker.js','utf8'),{
+    [browserName==='chrome'?'chrome':'browser']:api,URL,console,Promise
   });
-  assert.equal(data.ok,true);
-  assert.equal(h.reads.length,1);
-  assert.equal(h.reads[0].url,'http://127.0.0.1:18763/add');
-  assert.equal(JSON.parse(h.reads[0].options.body).intent,'user');
-});
-
-test('rejects invalid URLs without sending requests', async()=>{
-  const h=chromeHarness();
-  const response=await new Promise(resolve=>h.handlers.message({type:'aura.download',url:'file:///etc/passwd'},null,resolve));
-  assert.equal(response.ok,false);
-  assert.equal(h.reads.length,0);
-});
-
-test('does not connect without a pairing code',async()=>{
-  const h=chromeHarness('');
-  const response=await new Promise(resolve=>h.handlers.message({type:'aura.ping'},null,resolve));
-  assert.equal(response.ok,false);
-  assert.match(response.error,/Pair AURA/);
-  assert.equal(h.reads.length,0);
-});
-
-test('status requests use GET and a paired token',async()=>{
-  const h=chromeHarness();
-  const response=await new Promise(resolve=>h.handlers.message({type:'aura.ping'},null,resolve));
-  assert.equal(response.ok,true);
-  assert.equal(h.reads[0].url,'http://127.0.0.1:18763/status');
-  assert.equal(h.reads[0].options.headers['X-Aura-Token'],'valid-pairing-token');
-  assert.equal(h.reads[0].options.method,'GET');
-});
-
-function firefoxHarness(token = 'valid-pairing-token') {
-  const handlers = {};
-  const requests = [];
-  const browser = {
-    runtime: {
-      onInstalled: {addListener(fn){handlers.installed=fn}},
-      onMessage: {addListener(fn){handlers.message=fn}},
-    },
-    contextMenus:{
-      create() {},
-      onClicked:{addListener(fn){handlers.menu=fn}}
-    },
-    storage:{local:{async get(){return {pairingToken:token}}}}
-  };
-  vm.runInNewContext(fs.readFileSync('firefox/worker.js','utf8'),{
-    browser,URL,Promise,console,
-    fetch:async (url,options)=>{
-      requests.push({url,options});
-      return {ok:true,async json(){return {ok:true,gid:'firefox-test'}}};
+  async function dispatch(msg) {
+    if(browserName==='chrome'){
+      return new Promise(resolve=>{
+        assert.equal(handlers.message(msg,{},resolve),true);
+      });
     }
-  });
-  return {handlers,requests};
+    return await handlers.message(msg);
+  }
+  return {handlers,requests,storeDeletes,dispatch};
 }
-test('Firefox handoff requires an explicit URL and local pairing',async()=>{
-  const f=firefoxHarness();
-  const response=await f.handlers.message({type:'aura.download',url:'https://example.org/guide.pdf'});
-  assert.equal(response.ok,true);
-  assert.equal(f.requests.length,1);
-  assert.equal(f.requests[0].url,'http://127.0.0.1:18763/add');
-  assert.equal(JSON.parse(f.requests[0].options.body).intent,'user');
-});
-test('Firefox does not enqueue unsupported URL schemes',async()=>{
-  const f=firefoxHarness();
-  const response=await f.handlers.message({type:'aura.download',url:'javascript:alert(1)'});
-  assert.equal(response.ok,false);
-  assert.equal(f.requests.length,0);
-});
+for(const name of ['chrome','firefox']){
+  test(name+' automatically uses authorized native messaging, never token',async()=>{
+    const h=harness(name);
+    const response=await h.dispatch({type:'aura.ping'});
+    assert.equal(response.ok,true);
+    assert.deepEqual(JSON.parse(JSON.stringify(h.requests)),[
+      {host:'com.advertpreneur.aura',message:{command:'status'}}
+    ]);
+    assert.equal(h.requests[0].message.pairingToken,undefined);
+  });
+  test(name+' preserves explicit-only download handoff',async()=>{
+    const h=harness(name);
+    const res=await h.dispatch({type:'aura.download',url:'https://example.org/sample.zip'});
+    assert.equal(res.ok,true);
+    assert.equal(h.requests.length,1);
+    assert.equal(h.requests[0].message.command,'add');
+    assert.equal(h.requests[0].message.url,'https://example.org/sample.zip');
+    assert.equal(h.requests[0].message.intent,undefined);
+    assert.equal(h.handlers.downloads,undefined);
+  });
+  test(name+' rejects invalid schemes and embedded credentials',async()=>{
+    const h=harness(name);
+    for(const url of ['file:///etc/passwd','javascript:alert(1)','https://user:secret@example.com/z']){
+      const r=await h.dispatch({type:'aura.download',url});
+      assert.equal(r.ok,false);
+    }
+    assert.equal(h.requests.length,0);
+  });
+  test(name+' reports desktop-offline state',async()=>{
+    const h=harness(name,{ok:false,error:'AURA is offline.'});
+    const r=await h.dispatch({type:'aura.ping'});
+    assert.equal(r.ok,false);
+    assert.match(r.error,/offline/i);
+  });
+  test(name+' retains stream and yt routing',async()=>{
+    const h=harness(name);
+    await h.dispatch({type:'aura.media.download',url:'https://example.org/live.m3u8',kind:'hls'});
+    await h.dispatch({type:'aura.yt',path:'formats',payload:{url:'https://youtube.com/watch?v=a'}});
+    assert.equal(h.requests[0].message.command,'stream');
+    assert.equal(h.requests[1].message.command,'formats');
+  });
+}

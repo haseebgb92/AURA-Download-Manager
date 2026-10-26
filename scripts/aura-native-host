@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/python3 "$HOME/.local/share/aura-download-manager/native_host.py"

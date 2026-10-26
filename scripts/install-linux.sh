@@ -16,6 +16,12 @@ if [ -f "$target/app.py" ]; then
 fi
 install -m 644 "$root/desktop/linux/app.py" "$target/app.py"
 install -m 644 "$root/desktop/common/update_service.py" "$target/update_service.py"
+install -m 644 "$root/desktop/common/native_host.py" "$target/native_host.py"
+install -m 755 "$root/scripts/aura-native-host" "$HOME/.local/bin/aura-native-host"
+if [ -d "$root/chrome" ]; then
+  /usr/bin/python3 "$root/scripts/register_native_host.py"     --host "$HOME/.local/bin/aura-native-host"     --chrome-extension "$root/chrome" || echo "AURA: Native host registration needs checking."
+fi
+
 install -m 644 "$root/desktop/linux/style.css" "$target/style.css"
 install -m 644 "$root/assets/aura.png" "$HOME/.local/share/icons/hicolor/256x256/apps/aura-download-manager.png"
 # A standalone user hicolor directory is not a valid icon theme without index.theme.

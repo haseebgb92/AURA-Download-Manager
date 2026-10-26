@@ -5,6 +5,9 @@ on:
     paths:
       - "desktop/windows/**"
       - "desktop/common/**"
+      - "chrome/**"
+      - "firefox/**"
+      - "tests/smoke_native_executable.py"
       - "assets/**"
       - "requirements-windows.txt"
       - ".github/workflows/windows-build.yml"
@@ -12,6 +15,9 @@ on:
     paths:
       - "desktop/windows/**"
       - "desktop/common/**"
+      - "chrome/**"
+      - "firefox/**"
+      - "tests/smoke_native_executable.py"
       - "assets/**"
       - "requirements-windows.txt"
       - ".github/workflows/windows-build.yml"
@@ -39,10 +45,17 @@ jobs:
           if (!$candidate) { throw "Could not locate the actual aria2 executable" }
           $aria = $candidate.FullName
           python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --paths desktop/common --add-data "assets/aura.png;assets" --add-data "third_party/aria2/COPYING;licenses/aria2" --add-binary "$aria;bin" desktop/windows/app.py
+          python -m PyInstaller --noconfirm --clean --onefile --console --name AURA-Native-Host desktop/common/native_host.py
+          Copy-Item 'dist/AURA-Native-Host.exe' 'dist/AURA-Download-Manager/AURA-Native-Host.exe'
+          Copy-Item 'chrome' 'dist/AURA-Download-Manager/chrome' -Recurse
+          Copy-Item 'firefox' 'dist/AURA-Download-Manager/firefox' -Recurse
       - name: Smoke test packaged files
         shell: pwsh
         run: |
           if (!(Test-Path 'dist/AURA-Download-Manager/AURA-Download-Manager.exe')) { throw "Missing app binary" }
+          if (!(Test-Path 'dist/AURA-Download-Manager/AURA-Native-Host.exe')) { throw 'Missing native browser helper' }
+          python tests/smoke_native_executable.py dist/AURA-Download-Manager/AURA-Native-Host.exe
+          if (!(Test-Path 'dist/AURA-Download-Manager/chrome/manifest.json')) { throw 'Missing Chrome extension' }
           if (!(Test-Path 'dist/AURA-Download-Manager/_internal/bin/aria2c.exe')) { throw "Missing aria2 binary" }
       - name: Test packaged aria2 engine
         timeout-minutes: 3

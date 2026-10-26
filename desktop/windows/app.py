@@ -26,6 +26,7 @@ COMMON_DIR = pathlib.Path(__file__).resolve().parents[1] / "common"
 if COMMON_DIR.is_dir():
     sys.path.insert(0, str(COMMON_DIR))
 from update_service import VERSION, RELEASES_URL, check_for_updates
+from windows_registration import register_windows
 
 APP_DIR = pathlib.Path(os.getenv("LOCALAPPDATA") or pathlib.Path.home() / ".local/share") / "AURA-Download-Manager"
 APP_DIR.mkdir(parents=True, exist_ok=True)
@@ -361,7 +362,7 @@ class MainWindow(QMainWindow):
         self.concurrent=QSpinBox();self.concurrent.setRange(1,20);self.concurrent.setValue(3)
         sf.addRow("Concurrent downloads",self.concurrent)
         sf.addRow("",self.button("Apply settings",QStyle.SP_DialogApplyButton,self.save_settings,primary=True))
-        sf.addRow("Browser extension",self.button("Copy pairing code",QStyle.SP_DialogSaveButton,self.copy_pairing))
+        sf.addRow("Browser extension",QLabel("Connected automatically using the local AURA helper."))
         self.update_worker=None
         self.update_url=RELEASES_URL
         update_row=QHBoxLayout()
@@ -447,10 +448,6 @@ class MainWindow(QMainWindow):
     def choose_folder(self):
         chosen=QFileDialog.getExistingDirectory(self,"Choose downloads folder",str(DOWNLOADS))
         if chosen:self.download_path.setText(chosen)
-
-    def copy_pairing(self):
-        QApplication.clipboard().setText(PAIRING_TOKEN)
-        self.label.setText("Pairing code copied. Paste it into the browser extension, then clear your clipboard.")
 
     def add_clicked(self):
         try:
@@ -619,6 +616,16 @@ def main():
     except OSError as exc:
         QMessageBox.critical(None,"AURA browser bridge",f"Could not start local bridge: {exc}")
         return 1
+    # Per-user Windows native host registration: no admin privilege and no
+    # pairing code. Register only the installed AURA extension identifiers.
+    if os.name == "nt" and not ui_smoke:
+        try:
+            package_dir=pathlib.Path(sys.executable).resolve().parent
+            register_windows(package_dir, APP_DIR, pathlib.Path(os.environ["LOCALAPPDATA"]))
+        except (OSError, ValueError, ImportError) as exc:
+            # Desktop transfers should remain usable even if a browser
+            # installation or registry write is restricted.
+            print(f"AURA browser connection setup unavailable: {exc}", file=sys.stderr)
     win=MainWindow()
     if not app.windowIcon().isNull():win.setWindowIcon(app.windowIcon())
     win.show()

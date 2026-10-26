@@ -27,6 +27,19 @@ jobs:
           node --check firefox/media.js
           node --check chrome/popup.js
           node --check firefox/popup.js
+      - name: Native browser bridge unit tests
+        run: python -m unittest discover -s tests -p 'test_native_host.py' -v
+      - name: Browser permission contract
+        run: |
+          python - <<'PY_CHECK'
+          import json
+          from pathlib import Path
+          for folder in ('chrome','firefox'):
+              manifest=json.loads((Path(folder)/'manifest.json').read_text())
+              assert 'nativeMessaging' in manifest['permissions']
+              assert 'downloads' not in manifest['permissions']
+              assert 'storage' not in manifest['permissions']
+          PY_CHECK
       - name: Update service unit tests
         run: python -m unittest discover -s tests -p "test_update*.py" -v
       - name: Extension unit tests

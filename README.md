@@ -6,6 +6,10 @@
 
 ## Updates and releases
 
+**v0.6.3 Browser pairing upgrade:** no pairing codes. Chrome and Firefox use a browser-authorized native helper with a strict extension allowlist; the private desktop bridge token stays local. AURA automatically registers the helper on Linux installation and Windows startup (with the bundled helper). Reload an already installed extension once to pick up its new native-messaging permission. The previous browser-stored secret can be safely revoked.
+
+
+
 **v0.6.2 Settings redesign:** the installed Linux GTK app now shows transfer performance beside compact browser-pairing and update panels. All settings fit at the supported 930 × 580 minimum window size, without requiring scrolling. Controls, update checks, saved settings, and AURA identity are preserved. Reopening the window no longer expands it unexpectedly.
 
 **v0.6.1 Linux visual hotfix:** registers the bundled AURA icon as a valid user-level hicolor theme, rebuilds the icon cache, uses an absolute desktop launcher icon path, and strengthens the native GTK gradient surfaces. This corrects generic taskbar/menu icons and barely visible gradients on Linux Mint/Cinnamon. The Linux installer leaves download history, credentials, and existing transfer sessions intact.
@@ -22,8 +26,8 @@ Official packages are published by the [tag-triggered release workflow](.github/
 | --- | --- | --- |
 | Linux GTK desktop | Source included; derived from existing locally running app | `desktop/linux/` |
 | Windows Qt desktop | New Windows packaging workflow; native Windows runtime not yet field-tested | `desktop/windows/` |
-| Chrome browser extension | Manual link handoff with pairing UI | `chrome/` |
-| Firefox browser extension | Manual link handoff with pairing UI | `firefox/` |
+| Chrome browser extension | Automatic native connection; explicit link handoff | `chrome/` |
+| Firefox browser extension | Automatic native connection; explicit link handoff | `firefox/` |
 | Project website | Static GitHub Pages site | `docs/` |
 
 ### Linux
@@ -54,19 +58,15 @@ python desktop/windows/app.py
 
 The Windows version supports HTTP(S) downloads, queue status, pause/resume, history removal, Recycle Bin deletion, and extension handoff. Linux-specific `yt-dlp` / `ffmpeg` stream workflows are **not yet ported** to Windows.
 
-### Browser extensions
+### Browser extensions — zero-code connection (v0.6.3)
 
-Install the extension in Chrome using `chrome://extensions` > Developer mode > Load unpacked > choose `chrome/`. In Firefox load `firefox/manifest.json` temporarily via `about:debugging` (permanent installs require Mozilla signing).
+**No pairing codes are required.** AURA uses standard Chrome/Firefox **Native Messaging**, with a per-user host manifest that authorizes only known AURA extension IDs. The browser never receives the local bridge credential.
 
-Open the desktop AURA app **Settings > Browser extension pairing > Copy pairing code**. Click the extension toolbar icon, paste the code, and click **Save pairing**. The extension stores the code in local extension storage only, never in the repository. You can also add a URL from the popup or right-click a link and select **Download with AURA**.
+**Linux:** Run `bash scripts/install-linux.sh` once. It registers Firefox's fixed extension ID and discovers Chrome's installed unpacked AURA extension ID from its actual profile path. Install/update the extension in `chrome://extensions` → Developer mode → Load unpacked → select `chrome/`, then click that extension's **Reload** icon once. Chrome's native messaging permission is required. The extension then connects automatically whenever desktop AURA is running. Firefox temporary add-on loading via `about:debugging` works similarly, while permanent distribution requires Mozilla signing.
 
-Browser downloads are **not captured automatically**. No `downloads.onCreated` listener runs. Normal Chrome/Firefox downloads remain in the browser.
+**Windows:** The ZIP contains `AURA-Native-Host.exe`, a copy of the browser extensions, and the desktop executable. Launching the desktop app installs user-level native messaging manifests (no administrator access). Chrome installation is recognized when the unpacked extension's script matches the shipped AURA extension. After adding the unpacked Chrome extension, restart the desktop app once to register its browser ID, then reload the extension. Firefox uses its stable signed extension ID.
 
-For Linux YouTube downloads, additional local `yt-dlp` and `ffmpeg` dependencies may be needed. Only download media you are authorized to access.
-
-### Branding and third-party attribution
-
-AURA Download Manager is developed by **Advertpreneur**. It uses aria2 as a separate local transfer engine. The [aria2 license and upstream attribution](third_party/aria2/README.md) are included with Windows binary packages. AURA's interface, branding, and product identity are distinct from the engine.
+The extension popup automatically shows whether desktop AURA is connected; clicking **Check connection** is optional. Normal browser downloads stay in Chrome/Firefox. Only the extension's explicit add or context-menu action sends a URL to AURA. Do not modify or share `bridge.token`.
 
 ## Privacy and security
 
