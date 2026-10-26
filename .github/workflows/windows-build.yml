@@ -29,7 +29,11 @@ jobs:
       - name: Package Windows desktop
         shell: pwsh
         run: |
-          $aria = (Get-Command aria2c.exe -ErrorAction Stop).Source
+          # Bundle the REAL aria2 binary, not Chocolatey's generated executable shim.
+          $packageDir = Join-Path $env:ChocolateyInstall 'lib/aria2'
+          $candidate = Get-ChildItem -Path $packageDir -Filter aria2c.exe -File -Recurse -ErrorAction Stop | Select-Object -First 1
+          if (!$candidate) { throw "Could not locate the actual aria2 executable" }
+          $aria = $candidate.FullName
           python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --add-binary "$aria;bin" desktop/windows/app.py
       - name: Smoke test packaged files
         shell: pwsh
