@@ -34,7 +34,7 @@ jobs:
           $candidate = Get-ChildItem -Path $packageDir -Filter aria2c.exe -File -Recurse -ErrorAction Stop | Select-Object -First 1
           if (!$candidate) { throw "Could not locate the actual aria2 executable" }
           $aria = $candidate.FullName
-          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --add-binary "$aria;bin" desktop/windows/app.py
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name AURA-Download-Manager --icon assets/aura.ico --add-data "assets/aura.png;assets" --add-binary "$aria;bin" desktop/windows/app.py
       - name: Smoke test packaged files
         shell: pwsh
         run: |

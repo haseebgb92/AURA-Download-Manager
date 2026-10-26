@@ -51,3 +51,11 @@ Thumbs.db
 *.tmp
 *.swp
 *~
+
+# AURA local credentials and session/history data
+bridge.token
+aria2.secret
+session.txt
+*.aria2
+cookies.txt
+cookies-*.txt

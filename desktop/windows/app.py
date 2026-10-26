@@ -488,6 +488,9 @@ def main():
         os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
     app=QApplication(sys.argv)
     app.setApplicationName("AURA Download Manager")
+    icon = pathlib.Path(getattr(sys,"_MEIPASS",pathlib.Path(__file__).resolve().parents[2])) / "assets" / "aura.png"
+    if icon.is_file():
+        app.setWindowIcon(QIcon(str(icon)))
     try:start_engine()
     except Exception as exc:
         QMessageBox.critical(None,"AURA startup failed",str(exc))
