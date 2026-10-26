@@ -17,6 +17,7 @@ if not SECRET_FILE.exists():SECRET_FILE.write_text(secrets.token_hex(24));SECRET
 SECRET=SECRET_FILE.read_text().strip()
 DOWNLOADS=pathlib.Path.home()/'Downloads'
 DAEMON=None
+APP_INSTANCE=None
 
 def rpc(method,params=None):
     data=json.dumps({'jsonrpc':'2.0','id':'aura','method':'aria2.'+method,'params':['token:'+SECRET]+(params or [])}).encode()
@@ -119,10 +120,15 @@ class Bridge(http.server.BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204);self.send_header('Access-Control-Allow-Origin','*');self.send_header('Access-Control-Allow-Headers','X-Aura-Token, Content-Type');self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS');self.end_headers()
     def do_GET(self):
-        if self.path not in ('/yt/jobs','/status') or self.headers.get('X-Aura-Token')!=TOKEN:
+        if self.path not in ('/yt/jobs','/status','/show') or self.headers.get('X-Aura-Token')!=TOKEN:
             self.send_response(403);self.end_headers();return
         if self.path=='/status':
-            data=json.dumps({'ok':True,'app':'AURA Download Manager','engine':'aria2','platform':'linux'}).encode()
+            data=json.dumps({'ok':True,'app':'AURA Download Manager','platform':'linux'}).encode()
+        elif self.path=='/show':
+            if APP_INSTANCE is None:
+                self.send_response(503);self.end_headers();return
+            GLib.idle_add(APP_INSTANCE.show)
+            data=json.dumps({'ok':True,'shown':True}).encode()
         else:
             with YT_LOCK:
                 data=json.dumps({'ok':True,'jobs':[{k:v for k,v in x.items() if k!='proc'} for x in YOUTUBE_JOBS.values()]}).encode()
@@ -1039,4 +1045,14 @@ class App:
         return False
 
 if __name__=='__main__':
-    app=App();Gtk.main()
+    # Activate an already-running AURA instance instead of competing for bridge and RPC ports.
+    try:
+        request=urllib.request.Request(f'http://127.0.0.1:{PORT}/show',
+                                       headers={'X-Aura-Token':TOKEN})
+        with urllib.request.urlopen(request,timeout=1.2) as reply:
+            if json.load(reply).get('shown'):
+                sys.exit(0)
+    except (urllib.error.URLError,ValueError,TimeoutError):
+        pass
+    APP_INSTANCE=App()
+    Gtk.main()
